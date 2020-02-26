@@ -15,13 +15,12 @@ Snipe documentation:
 </p>
 
 <p>
-<a href="https://developers.facebook.com/docs/unity/">Facebook SDK for Unity</a> <br/>
-<a href"https://origincache.facebook.com/developers/resources/?id=FacebookSDK-current.zip">download link</a>
+<a href="https://developers.facebook.com/docs/unity/">Facebook SDK for Unity</a> (direct <a href="https://origincache.facebook.com/developers/resources/?id=FacebookSDK-current.zip">download link</a>)
 </p>
 
 
 ## Third-party libraries used
-<p>
-* Ionic.Zlib
-* WebSocket.jslib
-</p>
+<p><ul>
+<li> Ionic.Zlib
+<li> WebSocket.jslib
+</ul></p>
