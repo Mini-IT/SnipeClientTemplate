@@ -20,7 +20,7 @@ public class AppleGameCenterAuthProvider : BindProvider
 		get { return PlayerPrefs.GetInt(SnipePrefs.AUTH_BIND_DONE + PROVIDER_ID, 0) == 1; }
 	}
 
-	public override void RequestAuth(Action<int, string> success_callback, Action<string> fail_callback)
+	public override void RequestAuth(Action<int, string> success_callback, Action<string> fail_callback, bool reset_auth = false)
 	{
 		mAuthSucceesCallback = success_callback;
 		mAuthFailCallback = fail_callback;
@@ -37,6 +37,9 @@ public class AppleGameCenterAuthProvider : BindProvider
 					
 					data["messageType"] = REQUEST_USER_LOGIN;
 					data["login"] = gc_login;
+					if (reset_auth)
+						data["resetInternalAuth"] = reset_auth;
+					
 					SingleRequestClient.Request(SnipeConfig.Instance.auth, data, OnAuthLoginResponse);
 				};
 				generateIdentityVerificationSignature(VerificationSignatureGeneratorCallback);
@@ -88,6 +91,8 @@ public class AppleGameCenterAuthProvider : BindProvider
 
 	protected override void OnAuthLoginResponse(ExpandoObject data)
 	{
+		base.OnAuthLoginResponse(data);
+
 		string error_code = data.SafeGetString("errorCode");
 
 		if (error_code == ERROR_OK)

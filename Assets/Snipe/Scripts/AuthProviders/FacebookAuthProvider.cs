@@ -15,14 +15,14 @@ public class FacebookAuthProvider : BindProvider
 		get { return PlayerPrefs.GetInt(SnipePrefs.AUTH_BIND_DONE + PROVIDER_ID, 0) == 1; }
 	}
 
-	public override void RequestAuth(Action<int, string> success_callback, Action<string> fail_callback)
+	public override void RequestAuth(Action<int, string> success_callback, Action<string> fail_callback, bool reset_auth = false)
 	{
 		mAuthSucceesCallback = success_callback;
 		mAuthFailCallback = fail_callback;
 
 		if (FB.IsLoggedIn && AccessToken.CurrentAccessToken != null) // FacebookProvider.InstanceInitialized)
 		{
-			RequestLogin(ProviderId, AccessToken.CurrentAccessToken.UserId, AccessToken.CurrentAccessToken.TokenString);
+			RequestLogin(ProviderId, AccessToken.CurrentAccessToken.UserId, AccessToken.CurrentAccessToken.TokenString, reset_auth);
 			return;
 		}
 
@@ -59,6 +59,8 @@ public class FacebookAuthProvider : BindProvider
 
 	protected override void OnAuthLoginResponse(ExpandoObject data)
 	{
+		base.OnAuthLoginResponse(data);
+
 		string error_code = data.SafeGetString("errorCode");
 
 		if (error_code == ERROR_OK)

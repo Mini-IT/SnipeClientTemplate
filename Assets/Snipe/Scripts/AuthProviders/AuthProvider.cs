@@ -26,7 +26,7 @@ namespace MiniIT.Snipe
 			mAuthFailCallback = null;
 		}
 
-		public virtual void RequestAuth(Action<int, string> success_callback, Action<string> fail_callback)
+		public virtual void RequestAuth(Action<int, string> success_callback, Action<string> fail_callback, bool reset_auth = false)
 		{
 			// Override this method.
 
@@ -36,13 +36,17 @@ namespace MiniIT.Snipe
 			InvokeAuthFailCallback(ERROR_NOT_INITIALIZED);
 		}
 
-		protected void RequestLogin(string provider, string login, string token)
+		protected void RequestLogin(string provider, string login, string token, bool reset_auth = false)
 		{
-			ExpandoObject data = new ExpandoObject();
-			data["messageType"] = REQUEST_USER_LOGIN;
-			data["provider"] = provider;
-			data["login"] = login;
-			data["auth"] = token;
+			ExpandoObject data = new ExpandoObject()
+			{
+				["messageType"] = REQUEST_USER_LOGIN,
+				["provider"] = provider,
+				["login"] = login,
+				["auth"] = token,
+			};
+			if (reset_auth)
+				data["resetInternalAuth"] = reset_auth;
 
 			SingleRequestClient.Request(SnipeConfig.Instance.auth, data, (response) =>
 			{
@@ -60,7 +64,14 @@ namespace MiniIT.Snipe
 
 		protected virtual void OnAuthLoginResponse(ExpandoObject data)
 		{
-			// Override this method.
+			string auth_login = data?.SafeGetString("internalUID");
+			string auth_token = data?.SafeGetString("internalPassword");
+
+			if (!string.IsNullOrEmpty(auth_login) && !string.IsNullOrEmpty(auth_token))
+			{
+				PlayerPrefs.SetString(SnipePrefs.AUTH_UID, auth_login);
+				PlayerPrefs.SetString(SnipePrefs.AUTH_KEY, auth_token);
+			}
 		}
 
 		protected virtual void InvokeAuthSuccessCallback(int user_id, string login_token)

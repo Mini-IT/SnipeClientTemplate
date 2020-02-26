@@ -9,7 +9,7 @@ namespace MiniIT.Snipe
 		public override string ProviderId { get { return PROVIDER_ID; } }
 
 
-		public override void RequestAuth(Action<int, string> success_callback, Action<string> fail_callback)
+		public override void RequestAuth(Action<int, string> success_callback, Action<string> fail_callback, bool reset_auth = false)
 		{
 			mAuthSucceesCallback = success_callback;
 			mAuthFailCallback = fail_callback;
@@ -18,7 +18,7 @@ namespace MiniIT.Snipe
 
 			if (PlayerPrefs.HasKey(SnipePrefs.AUTH_UID) && PlayerPrefs.HasKey(SnipePrefs.AUTH_KEY))
 			{
-				RequestLogin(ProviderId, PlayerPrefs.GetString(SnipePrefs.AUTH_UID), PlayerPrefs.GetString(SnipePrefs.AUTH_KEY));
+				RequestLogin(ProviderId, PlayerPrefs.GetString(SnipePrefs.AUTH_UID), PlayerPrefs.GetString(SnipePrefs.AUTH_KEY), reset_auth);
 			}
 			else
 			{
@@ -28,6 +28,8 @@ namespace MiniIT.Snipe
 
 		protected override void OnAuthLoginResponse(ExpandoObject data)
 		{
+			base.OnAuthLoginResponse(data);
+
 			if (mAuthSucceesCallback == null)
 				return;
 

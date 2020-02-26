@@ -162,7 +162,7 @@ namespace MiniIT.Snipe
 			mAuthSucceededCallback = succeess_callback;
 			mAuthFailedCallback = fail_callback;
 
-			mCurrentProvider.RequestAuth(OnCurrentProviderAuthSuccess, OnCurrentProviderAuthFail);
+			mCurrentProvider.RequestAuth(OnCurrentProviderAuthSuccess, OnCurrentProviderAuthFail, !(mCurrentProvider is DefaultAuthProvider));
 		}
 
 		private AuthProvider GetNextAuthProvider(bool create_default = true)

@@ -18,7 +18,7 @@ public class AdvertisingIdAuthProvider : BindProvider
 		get { return PlayerPrefs.GetInt(SnipePrefs.AUTH_BIND_DONE + PROVIDER_ID, 0) == 1; }
 	}
 
-	public override void RequestAuth(Action<int, string> success_callback, Action<string> fail_callback)
+	public override void RequestAuth(Action<int, string> success_callback, Action<string> fail_callback, bool reset_auth = false)
 	{
 		mAuthSucceesCallback = success_callback;
 		mAuthFailCallback = fail_callback;
@@ -31,7 +31,7 @@ public class AdvertisingIdAuthProvider : BindProvider
 
 			if (CheckAdvertisingId(advertising_id))
 			{
-				RequestLogin(ProviderId, advertising_id, "");
+				RequestLogin(ProviderId, advertising_id, "", reset_auth);
 			}
 			else
 			{
@@ -103,6 +103,8 @@ public class AdvertisingIdAuthProvider : BindProvider
 
 	protected override void OnAuthLoginResponse(ExpandoObject data)
 	{
+		base.OnAuthLoginResponse(data);
+
 		string error_code = data.SafeGetString("errorCode");
 
 		Debug.Log($"[AdvertisingIdAuthProvider] {error_code}");
