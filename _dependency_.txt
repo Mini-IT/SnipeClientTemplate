@@ -1,0 +1,13 @@
+
+GooglePlayGamesPlugin
+https://github.com/playgameservices/play-games-plugin-for-unity
+
+Facebook SDK for Unity
+https://developers.facebook.com/docs/unity/
+download link:  https://origincache.facebook.com/developers/resources/?id=FacebookSDK-current.zip
+
+
+
+Third-party libraries used
+- Ionic.Zlib
+- WebSocket.jslib
