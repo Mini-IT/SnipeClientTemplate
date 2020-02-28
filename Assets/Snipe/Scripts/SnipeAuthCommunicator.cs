@@ -287,8 +287,6 @@ namespace MiniIT.Snipe
 				{
 					InvokeAuthFailCallback();
 				}
-
-				AmplitudeTracker.TrackEvent(REQUEST_USER_REGISTER, "error_code", error_code);
 			});
 		}
 
