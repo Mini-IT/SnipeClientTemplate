@@ -6,11 +6,14 @@ namespace MiniIT.Snipe
 	public class SnipeRequest : IDisposable
 	{
 		public const string ERROR_NO_CONNECTION = "noConnection";
+		public const string ERROR_NOT_LOGGED_IN = "notLoggedIn";
 		public const string ERROR_INVALIND_DATA = "invalidData";
 
 		protected SnipeClient mClient;
 		protected Action<ExpandoObject> mCallback;
 		protected string mMessageType;
+
+		protected int mRequestId;
 
 		public ExpandoObject Data { get; set; }
 
@@ -35,8 +38,15 @@ namespace MiniIT.Snipe
 				return;
 			}
 
+			if (!mClient.LoggedIn)
+			{
+				if (callback != null)
+					callback.Invoke(new ExpandoObject() { { "errorCode", ERROR_NOT_LOGGED_IN } });
+				return;
+			}
+
 			if (string.IsNullOrEmpty(mMessageType))
-				mMessageType = (Data != null) ? Data.SafeGetString("messageType") : null;
+				mMessageType = Data?.SafeGetString("messageType");
 
 			if (string.IsNullOrEmpty(mMessageType))
 			{
@@ -51,7 +61,7 @@ namespace MiniIT.Snipe
 				mClient.ConnectionLost += OnConnectionLost;
 				mClient.DataReceived += OnDataReceived;
 			}
-			mClient.SendRequest(mMessageType, Data);
+			mRequestId = mClient.SendRequest(mMessageType, Data);
 		}
 
 		private void OnConnectionLost(ExpandoObject data)
@@ -73,7 +83,7 @@ namespace MiniIT.Snipe
 
 		protected virtual bool CheckResponse(ExpandoObject response_data)
 		{
-			return (response_data.SafeGetString("type") == mMessageType);
+			return (response_data.SafeGetValue<int>("_requestID") == mRequestId && response_data.SafeGetString("type") == mMessageType);
 		}
 
 		public void Dispose()

@@ -271,6 +271,8 @@ namespace MiniIT.Snipe
 
 		public void ConnectWebSocket()
 		{
+			ConnectionId = "";
+
 			if (mWebSocketClient == null)
 			{
 				mWebSocketClient = new SnipeWebSocketClient();
@@ -292,6 +294,7 @@ namespace MiniIT.Snipe
 			
 			mConnected = true;
 			mClientKeySent = false;
+			mLoggedIn = false;
 
 			mCheckConnectionTriggerTime = 0.0f;
 			mHeartbeatTriggerTime = 0.0f;
@@ -302,7 +305,7 @@ namespace MiniIT.Snipe
 		private void OnTCPConnectionFailed()
 		{
 			mConnected = false;
-			ConnectionId = "";
+			mLoggedIn = false;
 
 			if (!string.IsNullOrEmpty(mConnectionWebSocketURL))
 			{
@@ -312,15 +315,19 @@ namespace MiniIT.Snipe
 			{
 				DisconnectReason = "OnTCPConnectionFailed";
 				DispatchEvent(ConnectionFailed);
+
+				ConnectionId = "";
 			}
 		}
 		
 		private void OnConnectionLost()
 		{
 			mConnected = false;
-			ConnectionId = "";
+			mLoggedIn = false;
 			DisconnectReason = "OnConnectionLost";
 			DispatchEvent(ConnectionLost);
+
+			ConnectionId = "";
 		}
 		
 		private void OnDataReceived(ExpandoObject data)
@@ -353,6 +360,7 @@ namespace MiniIT.Snipe
 			
 			mConnected = true;
 			mClientKeySent = false;
+			mLoggedIn = false;
 
 			mCheckConnectionTriggerTime = 0.0f;
 			ResetHeartbeatTime();
@@ -363,6 +371,7 @@ namespace MiniIT.Snipe
 		private void OnWebSocketConnectionFailed()
 		{
 			mConnected = false;
+			mLoggedIn = false;
 			DisconnectReason = "OnWebSocketConnectionFailed";
 			DispatchEvent(ConnectionFailed);
 		}
@@ -402,13 +411,14 @@ namespace MiniIT.Snipe
 			
 			mConnected = false;
 			mLoggedIn = false;
-			ConnectionId = "";
-
+			
 			mHeartbeatTriggerTime = 0.0f;
 			mCheckConnectionTriggerTime = 0.0f;
 
 			if (event_to_dispatch != null)
 				DispatchEvent(event_to_dispatch);
+
+			ConnectionId = "";
 		}
 
 		public int SendRequest(string message_type, ExpandoObject parameters = null)
