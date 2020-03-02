@@ -11,7 +11,6 @@ namespace MiniIT.Snipe
 		public event Action ConnectionFailed;
 		public event Action LoginSucceeded;
 
-		public int UserID { get; private set; }
 		public string LoginName { get; private set; }
 
 		protected SnipeClient Client { get; set; }
@@ -47,30 +46,19 @@ namespace MiniIT.Snipe
 
 		public virtual void StartCommunicator()
 		{
-			//SnipeAuthCommunicator.Instance.AddAuthProvider(new GooglePlayAuthProvider());
-			//SnipeAuthCommunicator.Instance.AddAuthProvider(new AppleGameCenterAuthProvider());
-
-			if (PlayerPrefs.HasKey(SnipePrefs.LOGIN_USER_ID) && !string.IsNullOrEmpty(SnipeAuthCommunicator.LoginToken))
+			if (CheckLoginParams())
 			{
-				UserID = Convert.ToInt32(PlayerPrefs.GetString(SnipePrefs.LOGIN_USER_ID));
-				
-				if (CheckLoginParams())
-				{
-					InitClient();
-					return;
-				}
-				else
-				{
-					UserID = 0;
-				}
+				InitClient();
 			}
-
-			GotoAuth();
+			else
+			{
+				GotoAuth();
+			}
 		}
 
 		private bool CheckLoginParams()
 		{
-			if (UserID != 0 && !string.IsNullOrEmpty(SnipeAuthCommunicator.LoginToken))
+			if (SnipeAuthCommunicator.UserID != 0 && !string.IsNullOrEmpty(SnipeAuthCommunicator.LoginToken))
 			{
 				// TODO: check token expiry
 				return true;
@@ -88,8 +76,6 @@ namespace MiniIT.Snipe
 
 		protected void OnAuthSucceeded()
 		{
-			UserID = SnipeAuthCommunicator.UserID;
-
 			InitClient();
 		}
 
@@ -135,7 +121,7 @@ namespace MiniIT.Snipe
 
 		public virtual void Disconnect()
 		{
-			Debug.Log("[SnipeCommunicator] Disconnect");
+			Debug.Log($"[SnipeCommunicator] {this.name} Disconnect");
 
 			LoginName = "";
 
@@ -160,7 +146,7 @@ namespace MiniIT.Snipe
 
 		protected virtual void OnConnectionSucceeded(ExpandoObject data)
 		{
-			Debug.Log("[SnipeCommunicator] Game Connection succeeded");
+			Debug.Log($"[SnipeCommunicator] {this.name} Connection succeeded");
 
 			if (ConnectionSucceeded != null)
 				ConnectionSucceeded.Invoke();
@@ -172,7 +158,7 @@ namespace MiniIT.Snipe
 
 		protected virtual void OnConnectionFailed(ExpandoObject data = null)
 		{
-			Debug.Log("[SnipeCommunicator] Game Connection failed");
+			Debug.Log($"[SnipeCommunicator] {this.name} [{Client?.ConnectionId}] Game Connection failed. Reason: {Client?.DisconnectReason}");
 
 			if (Client != null)
 				Client.DataReceived -= OnSnipeResponse;
@@ -246,7 +232,7 @@ namespace MiniIT.Snipe
 		protected void RequestLogin()
 		{
 			ExpandoObject data = new ExpandoObject();
-			data["id"] = UserID;
+			data["id"] = SnipeAuthCommunicator.UserID;
 			data["token"] = SnipeAuthCommunicator.LoginToken;
 			//data["lang"] = "ru";
 
@@ -267,7 +253,7 @@ namespace MiniIT.Snipe
 			// else add to queue???
 		}
 
-		public SnipeRequest CreateRequest(string message_type, ExpandoObject parameters = null)
+		public SnipeRequest CreateRequest(string message_type = null, ExpandoObject parameters = null)
 		{
 			SnipeRequest request = new SnipeRequest(this.Client, message_type);
 			request.Data = parameters;

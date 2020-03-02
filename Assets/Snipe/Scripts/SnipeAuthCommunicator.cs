@@ -28,7 +28,23 @@ namespace MiniIT.Snipe
 			}
 		}
 
-		public static int UserID { get; private set; }
+		private static int mUserID = 0;
+		public static int UserID
+		{
+			get
+			{
+				if (mUserID <= 0)
+				{
+					mUserID = Convert.ToInt32(PlayerPrefs.GetString(SnipePrefs.LOGIN_USER_ID, "0"));
+				}
+				return mUserID;
+			}
+			private set
+			{
+				mUserID = value;
+				PlayerPrefs.SetString(SnipePrefs.LOGIN_USER_ID, mUserID.ToString());
+			}
+		}
 		public static string LoginToken { get; private set; }
 
 		private static float mLoginTokenExpiry = -1;
@@ -209,7 +225,6 @@ namespace MiniIT.Snipe
 		{
 			UserID = user_id;
 			LoginToken = login_token;
-			PlayerPrefs.SetString(SnipePrefs.LOGIN_USER_ID, UserID.ToString());
 
 			InvokeAuthSuccessCallback();
 

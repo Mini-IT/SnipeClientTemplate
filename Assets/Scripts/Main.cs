@@ -99,7 +99,7 @@ public class Main : MonoBehaviour
 	{
 		if (mServer != null)
 		{
-			GUI.Label(new Rect(50, 50, 200, 50), mServer.LoggedIn ? $"Hello {mServer.UserID}" : "You are not logged in");
+			GUI.Label(new Rect(50, 50, 200, 50), mServer.LoggedIn ? $"Hello {SnipeAuthCommunicator.UserID}" : "You are not logged in");
 			GUI.Label(new Rect(50, 70, 200, 50), SnipeAuthCommunicator.JustRegistered ? "New account registered" : "Welcome back!");
 
 			if (mServer.LoggedIn && mServer.Player.PlayerData != null)
