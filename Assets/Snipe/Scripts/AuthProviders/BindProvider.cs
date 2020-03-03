@@ -5,7 +5,10 @@ namespace MiniIT.Snipe
 {
 	public class BindProvider : AuthProvider
 	{
-		protected Action<string> mBindResultCallback;
+		public bool AccountExists { get; protected set; } = false;
+		//public bool NeedToBind { get; protected set; } = false;
+
+		protected Action<BindProvider, string> mBindResultCallback;
 		protected Action<BindProvider, bool, bool> mCheckAuthExistsCallback;
 
 		public string BindDonePrefsKey
@@ -15,10 +18,19 @@ namespace MiniIT.Snipe
 
 		public bool IsBindDone
 		{
-			get { return PlayerPrefs.GetInt(BindDonePrefsKey, 0) == 1; }
+			get
+			{
+				return PlayerPrefs.GetInt(BindDonePrefsKey, 0) == 1;
+			}
+			protected set
+			{
+				Debug.Log($"[BindProvider] ({ProviderId}) Set bind done flag to {value}");
+
+				PlayerPrefs.SetInt(BindDonePrefsKey, value ? 1 : 0);
+			}
 		}
 
-		public virtual void RequestBind(Action<string> bind_callback = null)
+		public virtual void RequestBind(Action<BindProvider, string> bind_callback = null)
 		{
 			// Override this method.
 
@@ -31,6 +43,13 @@ namespace MiniIT.Snipe
 		{
 			// Override this method.
 			return "";
+		}
+
+		protected override void OnAuthLoginResponse(ExpandoObject data)
+		{
+			base.OnAuthLoginResponse(data);
+
+			AccountExists = (data?.SafeGetString("errorCode") == ERROR_OK);
 		}
 
 		public virtual bool CheckAuthExists(Action<BindProvider, bool, bool> callback)
@@ -59,13 +78,23 @@ namespace MiniIT.Snipe
 
 		protected virtual void OnBindResponse(ExpandoObject data)
 		{
-			InvokeBindResultCallback(data?.SafeGetString("errorCode"));
+			string error_code = data?.SafeGetString("errorCode");
+
+			Debug.Log($"[BindProvider] ({ProviderId}) OnBindResponse - {error_code}");
+
+			AccountExists = (error_code == "ok");
+
+			InvokeBindResultCallback(error_code);
 		}
 
 		protected virtual void OnCheckAuthExistsResponse(ExpandoObject data)
 		{
+			AccountExists = (data.SafeGetString("errorCode") == ERROR_OK);
+			//if (!AccountExists)
+			//	NeedToBind = true;
+
 			if (mCheckAuthExistsCallback != null)
-				mCheckAuthExistsCallback.Invoke(this, data.SafeGetString("errorCode") == "ok", data.SafeGetValue("isSame", false)); //(error_code == "noSuchAuth")
+				mCheckAuthExistsCallback.Invoke(this, AccountExists, data.SafeGetValue("isSame", false));
 
 			mCheckAuthExistsCallback = null;
 		}
@@ -73,7 +102,7 @@ namespace MiniIT.Snipe
 		protected virtual void InvokeBindResultCallback(string error_code)
 		{
 			if (mBindResultCallback != null)
-				mBindResultCallback.Invoke(error_code);
+				mBindResultCallback.Invoke(this, error_code);
 
 			mBindResultCallback = null;
 		}

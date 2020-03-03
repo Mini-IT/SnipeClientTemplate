@@ -10,11 +10,6 @@ public class FacebookAuthProvider : BindProvider
 	public const string PROVIDER_ID = "fb";
 	public override string ProviderId { get { return PROVIDER_ID; } }
 
-	public static new bool IsBindDone
-	{
-		get { return PlayerPrefs.GetInt(SnipePrefs.AUTH_BIND_DONE + PROVIDER_ID, 0) == 1; }
-	}
-
 	public override void RequestAuth(Action<int, string> success_callback, Action<string> fail_callback, bool reset_auth = false)
 	{
 		mAuthSucceesCallback = success_callback;
@@ -29,7 +24,7 @@ public class FacebookAuthProvider : BindProvider
 		InvokeAuthFailCallback(AuthProvider.ERROR_NOT_INITIALIZED);
 	}
 
-	public override void RequestBind(Action<string> bind_callback = null)
+	public override void RequestBind(Action<BindProvider, string> bind_callback = null)
 	{
 		mBindResultCallback = bind_callback;
 
@@ -68,16 +63,10 @@ public class FacebookAuthProvider : BindProvider
 			int user_id = data.SafeGetValue<int>("id");
 			string login_token = data.SafeGetString("token");
 
-			Debug.Log($"[FacebookAuthProvider] ({ProviderId}) Set bind done flag {BindDonePrefsKey}");
-
-			PlayerPrefs.SetInt(BindDonePrefsKey, 1);
+			IsBindDone = true;
 
 			InvokeAuthSuccessCallback(user_id, login_token);
 		}
-		//else if (error_code == ERROR_NO_SUCH_AUTH)
-		//{
-		//	// TODO
-		//}
 		else
 		{
 			InvokeAuthFailCallback(error_code);

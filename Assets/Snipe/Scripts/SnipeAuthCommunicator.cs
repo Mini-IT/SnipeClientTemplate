@@ -100,6 +100,11 @@ namespace MiniIT.Snipe
 			return auth_provider;
 		}
 
+		public List<AuthProvider> GetAuthProviders()
+		{
+			return mAuthProviders;
+		}
+
 		public ProviderType GetAuthProvider<ProviderType>() where ProviderType : AuthProvider
 		{
 			if (mAuthProviders != null)
@@ -132,19 +137,19 @@ namespace MiniIT.Snipe
 			return null;
 		}
 
-		//public void BindAllProviders()
-		//{
-		//	if (mAuthProviders != null)
-		//	{
-		//		foreach (BindProvider provider in mAuthProviders)
-		//		{
-		//			if (provider != null && provider.NeedToBind)
-		//			{
-		//				provider.RequestBind();
-		//			}
-		//		}
-		//	}
-		//}
+		public void BindAllProviders(bool force_all = false, Action<BindProvider, string> single_bind_callback = null)
+		{
+			if (mAuthProviders != null)
+			{
+				foreach (BindProvider provider in mAuthProviders)
+				{
+					if (provider != null && (force_all || !provider.AccountExists))
+					{
+						provider.RequestBind(single_bind_callback);
+					}
+				}
+			}
+		}
 
 		public void Authorize<ProviderType>(Action succeess_callback, Action fail_callback = null) where ProviderType : AuthProvider
 		{
@@ -252,7 +257,7 @@ namespace MiniIT.Snipe
 					mCurrentProvider.Dispose();
 
 				mCurrentProvider = GetNextAuthProvider();
-				mCurrentProvider.RequestAuth(OnCurrentProviderAuthSuccess, OnCurrentProviderAuthFail);
+				mCurrentProvider.RequestAuth(OnCurrentProviderAuthSuccess, OnCurrentProviderAuthFail, !(mCurrentProvider is DefaultAuthProvider));
 			}
 		}
 

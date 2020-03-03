@@ -15,11 +15,6 @@ public class AppleGameCenterAuthProvider : BindProvider
 
 	private static Action<ExpandoObject> mLoginSignatureCallback;
 
-	public static new bool IsBindDone
-	{
-		get { return PlayerPrefs.GetInt(SnipePrefs.AUTH_BIND_DONE + PROVIDER_ID, 0) == 1; }
-	}
-
 	public override void RequestAuth(Action<int, string> success_callback, Action<string> fail_callback, bool reset_auth = false)
 	{
 		mAuthSucceesCallback = success_callback;
@@ -51,7 +46,7 @@ public class AppleGameCenterAuthProvider : BindProvider
 		InvokeAuthFailCallback(AuthProvider.ERROR_NOT_INITIALIZED);
 	}
 
-	public override void RequestBind(Action<string> bind_callback = null)
+	public override void RequestBind(Action<BindProvider, string> bind_callback = null)
 	{
 		mBindResultCallback = bind_callback;
 
@@ -100,9 +95,7 @@ public class AppleGameCenterAuthProvider : BindProvider
 			int user_id = data.SafeGetValue<int>("id");
 			string login_token = data.SafeGetString("token");
 
-			Debug.Log($"[AppleGameCenterAuthProvider] ({ProviderId}) Set bind done flag {BindDonePrefsKey}");
-
-			PlayerPrefs.SetInt(BindDonePrefsKey, 1);
+			IsBindDone = true;
 
 			InvokeAuthSuccessCallback(user_id, login_token);
 		}

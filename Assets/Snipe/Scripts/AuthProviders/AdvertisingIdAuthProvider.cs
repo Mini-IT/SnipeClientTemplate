@@ -11,13 +11,7 @@ public class AdvertisingIdAuthProvider : BindProvider
 	public override string ProviderId { get { return PROVIDER_ID; } }
 
 	public static string AdvertisingId { get; private set; }
-	public static bool NeedToBind { get; private set; } = false;
-
-	public static new bool IsBindDone
-	{
-		get { return PlayerPrefs.GetInt(SnipePrefs.AUTH_BIND_DONE + PROVIDER_ID, 0) == 1; }
-	}
-
+	
 	public override void RequestAuth(Action<int, string> success_callback, Action<string> fail_callback, bool reset_auth = false)
 	{
 		mAuthSucceesCallback = success_callback;
@@ -58,11 +52,11 @@ public class AdvertisingIdAuthProvider : BindProvider
 		return Regex.IsMatch(advertising_id, @"[^0\W]");
 	}
 
-	public override void RequestBind(Action<string> bind_callback = null)
+	public override void RequestBind(Action<BindProvider, string> bind_callback = null)
 	{
 		Debug.Log("[AdvertisingIdAuthProvider] RequestBind");
 
-		NeedToBind = false;
+		//NeedToBind = false;
 		mBindResultCallback = bind_callback;
 
 		void advertising_id_callback(string advertising_id, bool tracking_enabled, string error)
@@ -114,22 +108,12 @@ public class AdvertisingIdAuthProvider : BindProvider
 			int user_id = data.SafeGetValue<int>("id");
 			string login_token = data.SafeGetString("token");
 
-			NeedToBind = false;
-
-			Debug.Log($"[AdvertisingIdAuthProvider] ({ProviderId}) Set bind done flag {BindDonePrefsKey}");
-
-			PlayerPrefs.SetInt(BindDonePrefsKey, 1);
+			IsBindDone = true;
 
 			InvokeAuthSuccessCallback(user_id, login_token);
 		}
 		else
 		{
-			if (error_code == ERROR_NO_SUCH_AUTH)
-			{
-				Debug.Log("[AdvertisingIdAuthProvider] NeedToBind = true");
-				NeedToBind = true;
-			}
-
 			InvokeAuthFailCallback(error_code);
 		}
 	}

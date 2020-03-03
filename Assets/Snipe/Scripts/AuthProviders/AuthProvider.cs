@@ -16,6 +16,8 @@ namespace MiniIT.Snipe
 		protected const string REQUEST_USER_EXISTS = "auth/user.exists";
 
 		public virtual string ProviderId { get { return "__"; } }
+
+		//public bool LoggedIn { get; protected set; } = false;
 		
 		protected Action<int, string> mAuthSucceesCallback;
 		protected Action<string> mAuthFailCallback;
@@ -48,29 +50,25 @@ namespace MiniIT.Snipe
 			if (reset_auth)
 				data["resetInternalAuth"] = reset_auth;
 
-			SingleRequestClient.Request(SnipeConfig.Instance.auth, data, (response) =>
-			{
-				string error_code = response?.SafeGetString("errorCode");
-				if (error_code == "ok")
-				{
-					OnAuthLoginResponse(response);
-				}
-				else
-				{
-					InvokeAuthFailCallback(error_code);
-				}
-			});
+			//LoggedIn = false;
+
+			SingleRequestClient.Request(SnipeConfig.Instance.auth, data, OnAuthLoginResponse);
 		}
 
 		protected virtual void OnAuthLoginResponse(ExpandoObject data)
 		{
-			string auth_login = data?.SafeGetString("internalUID");
-			string auth_token = data?.SafeGetString("internalPassword");
-
-			if (!string.IsNullOrEmpty(auth_login) && !string.IsNullOrEmpty(auth_token))
+			if (data?.SafeGetString("errorCode") == ERROR_OK)
 			{
-				PlayerPrefs.SetString(SnipePrefs.AUTH_UID, auth_login);
-				PlayerPrefs.SetString(SnipePrefs.AUTH_KEY, auth_token);
+				//LoggedIn = true;
+
+				string auth_login = data?.SafeGetString("internalUID");
+				string auth_token = data?.SafeGetString("internalPassword");
+
+				if (!string.IsNullOrEmpty(auth_login) && !string.IsNullOrEmpty(auth_token))
+				{
+					PlayerPrefs.SetString(SnipePrefs.AUTH_UID, auth_login);
+					PlayerPrefs.SetString(SnipePrefs.AUTH_KEY, auth_token);
+				}
 			}
 		}
 
