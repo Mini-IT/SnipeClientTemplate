@@ -7,9 +7,12 @@ namespace MiniIT.Snipe
 {
 	public class SnipeCommunicator : MonoBehaviour, IDisposable
 	{
+		public delegate void MessageReceivedHandler(ExpandoObject data, bool original = false);
+
 		public event Action ConnectionSucceeded;
 		public event Action ConnectionFailed;
 		public event Action LoginSucceeded;
+		public event MessageReceivedHandler MessageReceived;
 
 		public string LoginName { get; private set; }
 
@@ -138,7 +141,7 @@ namespace MiniIT.Snipe
 				Client.ConnectionSucceeded -= OnConnectionSucceeded;
 				Client.ConnectionFailed -= OnConnectionFailed;
 				Client.ConnectionLost -= OnConnectionFailed;
-				Client.DataReceived -= OnSnipeResponse;
+				Client.MessageReceived -= OnSnipeResponse;
 				Client.Disconnect();
 				Client = null;
 			}
@@ -151,7 +154,7 @@ namespace MiniIT.Snipe
 			if (ConnectionSucceeded != null)
 				ConnectionSucceeded.Invoke();
 
-			Client.DataReceived += OnSnipeResponse;
+			Client.MessageReceived += OnSnipeResponse;
 			
 			RequestLogin();
 		}
@@ -161,7 +164,7 @@ namespace MiniIT.Snipe
 			Debug.Log($"[SnipeCommunicator] {this.name} [{Client?.ConnectionId}] Game Connection failed. Reason: {Client?.DisconnectReason}");
 
 			if (Client != null)
-				Client.DataReceived -= OnSnipeResponse;
+				Client.MessageReceived -= OnSnipeResponse;
 
 			if (ConnectionFailed != null)
 				ConnectionFailed.Invoke();
@@ -200,14 +203,8 @@ namespace MiniIT.Snipe
 						if (LoginSucceeded != null)
 							LoginSucceeded.Invoke();
 					}
-					else if (error_code == "wrongToken")
+					else if (error_code == "wrongToken" || error_code == "userNotFound")
 					{
-						GotoAuth();
-					}
-					else if (error_code == "userNotFound")  // need to register new user
-					{
-						PlayerPrefs.DeleteKey(SnipePrefs.AUTH_UID);
-						PlayerPrefs.DeleteKey(SnipePrefs.AUTH_KEY);
 						GotoAuth();
 					}
 					else if (error_code == "userDisconnecting")
@@ -221,6 +218,8 @@ namespace MiniIT.Snipe
 					}
 					break;
 			}
+
+			MessageReceived?.Invoke(data, original);
 		}
 
 		private IEnumerator WaitAndRequestLogin()

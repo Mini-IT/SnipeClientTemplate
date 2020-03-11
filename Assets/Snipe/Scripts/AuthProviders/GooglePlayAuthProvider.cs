@@ -14,9 +14,9 @@ public class GooglePlayAuthProvider : BindProvider
 	//	get { return PlayerPrefs.GetInt(SnipePrefs.AUTH_BIND_DONE + PROVIDER_ID, 0) == 1; }
 	//}
 
-	public override void RequestAuth(Action<int, string> success_callback, Action<string> fail_callback, bool reset_auth = false)
+	public override void RequestAuth(AuthSuccessCallback success_callback, AuthFailCallback fail_callback, bool reset_auth = false)
 	{
-		mAuthSucceesCallback = success_callback;
+		mAuthSuccessCallback = success_callback;
 		mAuthFailCallback = fail_callback;
 
 #if UNITY_ANDROID
@@ -43,8 +43,10 @@ public class GooglePlayAuthProvider : BindProvider
 		InvokeAuthFailCallback(AuthProvider.ERROR_NOT_INITIALIZED);
 	}
 
-	public override void RequestBind(Action<BindProvider, string> bind_callback = null)
+	public override void RequestBind(BindResultCallback bind_callback = null)
 	{
+		Debug.Log("[GooglePlayAuthProvider] RequestBind");
+
 		mBindResultCallback = bind_callback;
 
 #if UNITY_ANDROID
@@ -59,6 +61,17 @@ public class GooglePlayAuthProvider : BindProvider
 					if (string.IsNullOrEmpty(google_token))
 					{
 						Debug.Log("[GooglePlayAuthProvider] google_token is empty");
+						InvokeBindResultCallback(AuthProvider.ERROR_NOT_INITIALIZED);
+						return;
+					}
+
+					string auth_login = PlayerPrefs.GetString(SnipePrefs.AUTH_UID);
+					string auth_token = PlayerPrefs.GetString(SnipePrefs.AUTH_KEY);
+
+					if (string.IsNullOrEmpty(auth_login) || string.IsNullOrEmpty(auth_token))
+					{
+						Debug.Log("[GooglePlayAuthProvider] internal uid or token is invalid");
+						InvokeBindResultCallback(AuthProvider.ERROR_PARAMS_WRONG);
 						return;
 					}
 
@@ -67,8 +80,8 @@ public class GooglePlayAuthProvider : BindProvider
 					data["provider"] = ProviderId;
 					data["login"] = GooglePlayProvider.Instance.PlayerProfile.Id;
 					data["auth"] = google_token;
-					data["loginInt"] = PlayerPrefs.GetString(SnipePrefs.AUTH_UID);
-					data["authInt"] = PlayerPrefs.GetString(SnipePrefs.AUTH_KEY);
+					data["loginInt"] = auth_login;
+					data["authInt"] = auth_token;
 
 					Debug.Log("[GooglePlayAuthProvider] send user.bind " + data.ToJSONString());
 					SingleRequestClient.Request(SnipeConfig.Instance.auth, data, OnBindResponse);
@@ -108,7 +121,7 @@ public class GooglePlayAuthProvider : BindProvider
 		return GooglePlayProvider.InstanceInitialized ? GooglePlayProvider.Instance.PlayerProfile.Id : "";
 	}
 
-	public override bool CheckAuthExists(Action<BindProvider, bool, bool> callback)
+	public override bool CheckAuthExists(CheckAuthExistsCallback callback)
 	{
 		if (!GooglePlayProvider.InstanceInitialized)
 			return false;

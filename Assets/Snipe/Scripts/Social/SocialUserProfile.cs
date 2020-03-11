@@ -29,7 +29,10 @@ namespace MiniIT.Social
 		public Texture2D LoadedPhotoMedium;        // аватарка (обычно от 100x100px до 200x200px)
 		
 		private string mCombinedID = "";   // кобминированный ID пользователя, включающий ID соцсети и ID пользователя в этой соцсети
-		
+
+		private SimpleImageLoader mSmallPhotoLoader;
+		private SimpleImageLoader mMediumPhotoLoader;
+
 		public SocialUserProfile(string id = "", string network_type = "__")
 		{
 			this.Id = id;
@@ -225,37 +228,52 @@ namespace MiniIT.Social
 
 		//-------------------------------------------
 
-		public void LoadPhotoSmall(Action<Texture2D> callback = null)
+		public SimpleImageLoader LoadPhotoSmall(Action<Texture2D> callback = null)
 		{
 			if (this.LoadedPhotoSmall != null)
 			{
 				if (callback != null)
 					callback.Invoke(this.LoadedPhotoSmall);
+
+				return null;
 			}
 			else
 			{
-				SimpleImageLoader.Load(this.PhotoSmallURL,
+				if (mSmallPhotoLoader != null && mSmallPhotoLoader.Url != this.PhotoSmallURL)
+					mSmallPhotoLoader.Cancel();
+
+				mSmallPhotoLoader = SimpleImageLoader.Load(this.PhotoSmallURL,
 					(Texture2D texture) =>
 					{
 						LoadedPhotoSmall = texture;
 						if (callback != null)
 							callback.Invoke(texture);
-					}	
+					},
+					true
 				);
 			}
+
+			return mSmallPhotoLoader;
 		}
 
-		public void LoadPhotoMedium(Action<Texture2D> callback = null)
+		public SimpleImageLoader LoadPhotoMedium(Action<Texture2D> callback = null)
 		{
 			if (this.LoadedPhotoMedium != null)
 			{
 				if (callback != null)
 					callback.Invoke(this.LoadedPhotoMedium);
+
+				return null;
 			}
 			else
 			{
-				SimpleImageLoader.Load(this.PhotoMediumURL, callback);
+				if (mMediumPhotoLoader != null && mMediumPhotoLoader.Url != this.PhotoMediumURL)
+					mMediumPhotoLoader.Cancel();
+
+				mMediumPhotoLoader = SimpleImageLoader.Load(this.PhotoMediumURL, callback, true);
 			}
+
+			return mMediumPhotoLoader;
 		}
 	}
 }

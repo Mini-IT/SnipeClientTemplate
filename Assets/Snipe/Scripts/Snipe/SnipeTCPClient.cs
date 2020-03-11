@@ -304,8 +304,8 @@ namespace MiniIT.Snipe
 					// try // ????
 					if (response != null)
 					{
-						if (OnDataReceived != null)
-							OnDataReceived.Invoke(response);
+						if (OnMessageReceived != null)
+							OnMessageReceived.Invoke(response);
 					}
 				}
 				else  // not all of the message's bytes are in the buffer yet

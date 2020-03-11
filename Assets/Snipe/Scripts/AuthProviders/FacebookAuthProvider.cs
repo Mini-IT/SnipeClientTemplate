@@ -10,9 +10,9 @@ public class FacebookAuthProvider : BindProvider
 	public const string PROVIDER_ID = "fb";
 	public override string ProviderId { get { return PROVIDER_ID; } }
 
-	public override void RequestAuth(Action<int, string> success_callback, Action<string> fail_callback, bool reset_auth = false)
+	public override void RequestAuth(AuthSuccessCallback success_callback, AuthFailCallback fail_callback, bool reset_auth = false)
 	{
-		mAuthSucceesCallback = success_callback;
+		mAuthSuccessCallback = success_callback;
 		mAuthFailCallback = fail_callback;
 
 		if (FB.IsLoggedIn && AccessToken.CurrentAccessToken != null) // FacebookProvider.InstanceInitialized)
@@ -24,11 +24,16 @@ public class FacebookAuthProvider : BindProvider
 		InvokeAuthFailCallback(AuthProvider.ERROR_NOT_INITIALIZED);
 	}
 
-	public override void RequestBind(Action<BindProvider, string> bind_callback = null)
+	public override void RequestBind(BindResultCallback bind_callback = null)
 	{
+		Debug.Log("[FacebookAuthProvider] RequestBind");
+
 		mBindResultCallback = bind_callback;
 
-		if (PlayerPrefs.HasKey(SnipePrefs.AUTH_UID) && PlayerPrefs.HasKey(SnipePrefs.AUTH_KEY))
+		string auth_login = PlayerPrefs.GetString(SnipePrefs.AUTH_UID);
+		string auth_token = PlayerPrefs.GetString(SnipePrefs.AUTH_KEY);
+
+		if (!string.IsNullOrEmpty(auth_login) && !string.IsNullOrEmpty(auth_token))
 		{
 			if (FB.IsLoggedIn && AccessToken.CurrentAccessToken != null) // FacebookProvider.InstanceInitialized)
 			{
@@ -38,8 +43,8 @@ public class FacebookAuthProvider : BindProvider
 					["provider"] = ProviderId,
 					["login"] = AccessToken.CurrentAccessToken.UserId,
 					["auth"] = AccessToken.CurrentAccessToken.TokenString,
-					["loginInt"] = PlayerPrefs.GetString(SnipePrefs.AUTH_UID),
-					["authInt"] = PlayerPrefs.GetString(SnipePrefs.AUTH_KEY),
+					["loginInt"] = auth_login,
+					["authInt"] = auth_token,
 				};
 
 				Debug.Log("[FacebookAuthProvider] send user.bind " + data.ToJSONString());
@@ -81,7 +86,7 @@ public class FacebookAuthProvider : BindProvider
 		return "";
 	}
 
-	public override bool CheckAuthExists(Action<BindProvider, bool, bool> callback)
+	public override bool CheckAuthExists(CheckAuthExistsCallback callback)
 	{
 		if (FB.IsLoggedIn && AccessToken.CurrentAccessToken != null)
 		{

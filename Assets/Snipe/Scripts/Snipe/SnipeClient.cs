@@ -120,7 +120,7 @@ namespace MiniIT.Snipe
 		public event Action<ExpandoObject> ConnectionFailed;
 		public event Action<ExpandoObject> ConnectionLost;
 		//public event Action<ExpandoObject> ErrorHappened;
-		public event Action<ExpandoObject> DataReceived;
+		public event Action<ExpandoObject> MessageReceived;
 
 		#pragma warning restore 0067
 
@@ -244,7 +244,7 @@ namespace MiniIT.Snipe
 				mTCPClient.OnConnectionSucceeded = OnTCPConnectionSucceeded;
 				mTCPClient.OnConnectionFailed = OnTCPConnectionFailed;
 				mTCPClient.OnConnectionLost = OnConnectionLost;
-				mTCPClient.OnDataReceived = OnDataReceived;
+				mTCPClient.OnMessageReceived = OnMessageReceived;
 			}
 			mTCPClient.Connect(mConnectionHost, mConnectionPort);
 		}
@@ -279,7 +279,7 @@ namespace MiniIT.Snipe
 				mWebSocketClient.OnConnectionSucceeded = OnWebSocketConnectionSucceeded;
 				mWebSocketClient.OnConnectionFailed = OnWebSocketConnectionFailed;
 				mWebSocketClient.OnConnectionLost = OnConnectionLost;
-				mWebSocketClient.OnDataReceived = OnDataReceived;
+				mWebSocketClient.OnMessageReceived = OnMessageReceived;
 			}
 			mWebSocketClient.Connect(mConnectionWebSocketURL);
 		}
@@ -330,7 +330,7 @@ namespace MiniIT.Snipe
 			ConnectionId = "";
 		}
 		
-		private void OnDataReceived(ExpandoObject data)
+		private void OnMessageReceived(ExpandoObject data)
 		{
 			// reset check connection
 			mCheckConnectionTriggerTime = 0.0f;
@@ -345,9 +345,9 @@ namespace MiniIT.Snipe
 				ConnectionId = data.SafeGetString("_connectionID");
 
 			//if (DebugEnabled)
-			//Debug.Log(DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + " [SnipeClient] OnDataReceived: " + data?.ToJSONString());
+			//Debug.Log(DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + " [SnipeClient] OnMessageReceived: " + data?.ToJSONString());
 
-			DispatchEvent(DataReceived, data);
+			DispatchEvent(MessageReceived, data);
 		}
 		
 		private void OnWebSocketConnectionSucceeded()

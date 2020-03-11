@@ -44,7 +44,7 @@ namespace MiniIT.Snipe
 		{
 			Debug.Log($"[SingleRequestClient] ({mRequestData?.SafeGetString("messageType")}) Connection succeeded");
 
-			mClient.DataReceived += OnResponse;
+			mClient.MessageReceived += OnResponse;
 			mClient.SendRequest(mRequestData);
 		}
 
@@ -52,7 +52,7 @@ namespace MiniIT.Snipe
 		{
 			Debug.Log($"[SingleRequestClient] ({mRequestData?.SafeGetString("messageType")}) Connection failed");
 
-			mClient.DataReceived -= OnResponse;
+			mClient.MessageReceived -= OnResponse;
 
 			InvokeCallback(null);
 			DisposeClient();
@@ -87,7 +87,7 @@ namespace MiniIT.Snipe
 			if (mClient == null)
 				return;
 
-			mClient.DataReceived -= OnResponse;
+			mClient.MessageReceived -= OnResponse;
 			mClient.ConnectionSucceeded -= OnConnectionSucceeded;
 			mClient.ConnectionFailed -= OnConnectionFailed;
 			mClient.ConnectionLost -= OnConnectionFailed;

@@ -9,16 +9,17 @@ namespace MiniIT.Snipe
 		public override string ProviderId { get { return PROVIDER_ID; } }
 
 
-		public override void RequestAuth(Action<int, string> success_callback, Action<string> fail_callback, bool reset_auth = false)
+		public override void RequestAuth(AuthSuccessCallback success_callback, AuthFailCallback fail_callback, bool reset_auth = false)
 		{
-			mAuthSucceesCallback = success_callback;
+			mAuthSuccessCallback = success_callback;
 			mAuthFailCallback = fail_callback;
 
-			//Debug.Log("[AuthProvider] RequestAuth " + provider + "  " + login + " token: " + (token != null ? token.Substring(0, 4) + "..." : "null"));
+			string auth_login = PlayerPrefs.GetString(SnipePrefs.AUTH_UID);
+			string auth_token = PlayerPrefs.GetString(SnipePrefs.AUTH_KEY);
 
-			if (PlayerPrefs.HasKey(SnipePrefs.AUTH_UID) && PlayerPrefs.HasKey(SnipePrefs.AUTH_KEY))
+			if (!string.IsNullOrEmpty(auth_login) && !string.IsNullOrEmpty(auth_token))
 			{
-				RequestLogin(ProviderId, PlayerPrefs.GetString(SnipePrefs.AUTH_UID), PlayerPrefs.GetString(SnipePrefs.AUTH_KEY), reset_auth);
+				RequestLogin(ProviderId, auth_login, auth_token, reset_auth);
 			}
 			else
 			{
@@ -30,7 +31,7 @@ namespace MiniIT.Snipe
 		{
 			base.OnAuthLoginResponse(data);
 
-			if (mAuthSucceesCallback == null)
+			if (mAuthSuccessCallback == null)
 				return;
 
 			string error_code = data.SafeGetString("errorCode");
@@ -49,11 +50,6 @@ namespace MiniIT.Snipe
 					PlayerPrefs.DeleteKey(SnipePrefs.AUTH_UID);
 					PlayerPrefs.DeleteKey(SnipePrefs.AUTH_KEY);
 				}
-
-				//	if (error_code == ERROR_PARAMS_WRONG)
-				//	{
-
-				//	}
 
 				InvokeAuthFailCallback(error_code);
 			}

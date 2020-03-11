@@ -8,8 +8,11 @@ namespace MiniIT.Snipe
 		public bool AccountExists { get; protected set; } = false;
 		//public bool NeedToBind { get; protected set; } = false;
 
-		protected Action<BindProvider, string> mBindResultCallback;
-		protected Action<BindProvider, bool, bool> mCheckAuthExistsCallback;
+		public delegate void BindResultCallback(BindProvider provider, string error_code);
+		public delegate void CheckAuthExistsCallback(BindProvider provider, bool exists, bool is_me, string user_name = null);
+
+		protected BindResultCallback mBindResultCallback;
+		protected CheckAuthExistsCallback mCheckAuthExistsCallback;
 
 		public string BindDonePrefsKey
 		{
@@ -30,7 +33,7 @@ namespace MiniIT.Snipe
 			}
 		}
 
-		public virtual void RequestBind(Action<BindProvider, string> bind_callback = null)
+		public virtual void RequestBind(BindResultCallback bind_callback = null)
 		{
 			// Override this method.
 
@@ -52,13 +55,13 @@ namespace MiniIT.Snipe
 			AccountExists = (data?.SafeGetString("errorCode") == ERROR_OK);
 		}
 
-		public virtual bool CheckAuthExists(Action<BindProvider, bool, bool> callback)
+		public virtual bool CheckAuthExists(CheckAuthExistsCallback callback)
 		{
 			// Override this method.
 			return false;
 		}
 
-		protected virtual void CheckAuthExists(string user_id, Action<BindProvider, bool, bool> callback)
+		protected virtual void CheckAuthExists(string user_id, CheckAuthExistsCallback callback)
 		{
 			mCheckAuthExistsCallback = callback;
 
@@ -94,13 +97,15 @@ namespace MiniIT.Snipe
 			//	NeedToBind = true;
 
 			if (mCheckAuthExistsCallback != null)
-				mCheckAuthExistsCallback.Invoke(this, AccountExists, data.SafeGetValue("isSame", false));
+				mCheckAuthExistsCallback.Invoke(this, AccountExists, data.SafeGetValue("isSame", false), data.SafeGetString("name"));
 
 			mCheckAuthExistsCallback = null;
 		}
 
 		protected virtual void InvokeBindResultCallback(string error_code)
 		{
+			Debug.Log($"[BindProvider] ({ProviderId}) InvokeBindResultCallback - {error_code}");
+
 			if (mBindResultCallback != null)
 				mBindResultCallback.Invoke(this, error_code);
 

@@ -29,7 +29,7 @@ namespace MiniIT.Snipe
 		internal Action OnConnectionFailed;
 		internal Action OnConnectionLost;
 		//internal Action OnErrorHappened;
-		internal Action<ExpandoObject> OnDataReceived;
+		internal Action<ExpandoObject> OnMessageReceived;
 		
 		protected bool mConnected = false;
 		
@@ -84,7 +84,7 @@ namespace MiniIT.Snipe
 			this.OnConnectionFailed = null;
 			this.OnConnectionLost = null;
 			//this.OnErrorHappened = null;
-			this.OnDataReceived = null;
+			this.OnMessageReceived = null;
 			
 			Disconnect();
 		}

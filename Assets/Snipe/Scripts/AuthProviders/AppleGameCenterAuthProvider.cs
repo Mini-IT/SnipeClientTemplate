@@ -15,9 +15,9 @@ public class AppleGameCenterAuthProvider : BindProvider
 
 	private static Action<ExpandoObject> mLoginSignatureCallback;
 
-	public override void RequestAuth(Action<int, string> success_callback, Action<string> fail_callback, bool reset_auth = false)
+	public override void RequestAuth(AuthSuccessCallback success_callback, AuthFailCallback fail_callback, bool reset_auth = false)
 	{
-		mAuthSucceesCallback = success_callback;
+		mAuthSuccessCallback = success_callback;
 		mAuthFailCallback = fail_callback;
 
 #if UNITY_IOS
@@ -46,8 +46,10 @@ public class AppleGameCenterAuthProvider : BindProvider
 		InvokeAuthFailCallback(AuthProvider.ERROR_NOT_INITIALIZED);
 	}
 
-	public override void RequestBind(Action<BindProvider, string> bind_callback = null)
+	public override void RequestBind(BindResultCallback bind_callback = null)
 	{
+		Debug.Log("[AppleGameCenterAuthProvider] RequestBind");
+
 		mBindResultCallback = bind_callback;
 
 #if UNITY_IOS
@@ -62,12 +64,22 @@ public class AppleGameCenterAuthProvider : BindProvider
 					{
 						Debug.Log("[AppleGameCenterAuthProvider] RequestBind - LoginSignatureCallback");
 
+						string auth_login = PlayerPrefs.GetString(SnipePrefs.AUTH_UID);
+						string auth_token = PlayerPrefs.GetString(SnipePrefs.AUTH_KEY);
+
+						if (string.IsNullOrEmpty(auth_login) || string.IsNullOrEmpty(auth_token))
+						{
+							Debug.Log("[AppleGameCenterAuthProvider] internal uid or token is invalid");
+							InvokeBindResultCallback(AuthProvider.ERROR_PARAMS_WRONG);
+							return;
+						}
+
 						data["messageType"] = REQUEST_USER_BIND;
 						data["provider"] = ProviderId;
 						data["login"] = gc_login;
 						//data["auth"] = login_token;
-						data["loginInt"] = PlayerPrefs.GetString(SnipePrefs.AUTH_UID);
-						data["authInt"] = PlayerPrefs.GetString(SnipePrefs.AUTH_KEY);
+						data["loginInt"] = auth_login;
+						data["authInt"] = auth_token;
 
 						Debug.Log("[AppleGameCenterAuthProvider] send user.bind " + data.ToJSONString());
 						SingleRequestClient.Request(SnipeConfig.Instance.auth, data, OnBindResponse);
@@ -110,7 +122,7 @@ public class AppleGameCenterAuthProvider : BindProvider
 		return AppleGameCenterProvider.InstanceInitialized ? AppleGameCenterProvider.Instance.PlayerProfile.Id : "";
 	}
 
-	public override bool CheckAuthExists(Action<BindProvider, bool, bool> callback)
+	public override bool CheckAuthExists(CheckAuthExistsCallback callback)
 	{
 		if (!AppleGameCenterProvider.InstanceInitialized)
 			return false;

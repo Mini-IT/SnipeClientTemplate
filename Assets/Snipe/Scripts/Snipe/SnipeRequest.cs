@@ -59,7 +59,7 @@ namespace MiniIT.Snipe
 			if (mCallback != null)
 			{
 				mClient.ConnectionLost += OnConnectionLost;
-				mClient.DataReceived += OnDataReceived;
+				mClient.MessageReceived += OnMessageReceived;
 			}
 			mRequestId = mClient.SendRequest(mMessageType, Data);
 		}
@@ -70,7 +70,7 @@ namespace MiniIT.Snipe
 				mCallback.Invoke(new ExpandoObject() { { "errorCode", ERROR_NO_CONNECTION } });
 		}
 
-		protected void OnDataReceived(ExpandoObject response_data)
+		protected void OnMessageReceived(ExpandoObject response_data)
 		{
 			if (CheckResponse(response_data))
 			{
@@ -91,7 +91,7 @@ namespace MiniIT.Snipe
 			if (mClient != null)
 			{
 				mClient.ConnectionLost -= OnConnectionLost;
-				mClient.DataReceived -= OnDataReceived;
+				mClient.MessageReceived -= OnMessageReceived;
 				mClient = null;
 			}
 		}

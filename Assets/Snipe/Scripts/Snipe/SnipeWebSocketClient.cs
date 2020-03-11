@@ -153,8 +153,8 @@ namespace MiniIT.Snipe
 
 						if (response != null)
 						{
-							if (OnDataReceived != null)
-								OnDataReceived.Invoke(response);
+							if (OnMessageReceived != null)
+								OnMessageReceived.Invoke(response);
 						}
 					}
 #if DEBUG

@@ -18,21 +18,24 @@ namespace MiniIT.Snipe
 		public virtual string ProviderId { get { return "__"; } }
 
 		//public bool LoggedIn { get; protected set; } = false;
-		
-		protected Action<int, string> mAuthSucceesCallback;
-		protected Action<string> mAuthFailCallback;
+
+		public delegate void AuthSuccessCallback(int user_id, string login_token);
+		public delegate void AuthFailCallback(string login_code);
+
+		protected AuthSuccessCallback mAuthSuccessCallback;
+		protected AuthFailCallback mAuthFailCallback;
 
 		public virtual void Dispose()
 		{
-			mAuthSucceesCallback = null;
+			mAuthSuccessCallback = null;
 			mAuthFailCallback = null;
 		}
 
-		public virtual void RequestAuth(Action<int, string> success_callback, Action<string> fail_callback, bool reset_auth = false)
+		public virtual void RequestAuth(AuthSuccessCallback success_callback, AuthFailCallback fail_callback, bool reset_auth = false)
 		{
 			// Override this method.
 
-			//mAuthSucceesCallback = success_callback;
+			//mAuthSuccessCallback = success_callback;
 			//mAuthFailCallback = fail_callback;
 
 			InvokeAuthFailCallback(ERROR_NOT_INITIALIZED);
@@ -74,10 +77,10 @@ namespace MiniIT.Snipe
 
 		protected virtual void InvokeAuthSuccessCallback(int user_id, string login_token)
 		{
-			if (mAuthSucceesCallback != null)
-				mAuthSucceesCallback.Invoke(user_id, login_token);
+			if (mAuthSuccessCallback != null)
+				mAuthSuccessCallback.Invoke(user_id, login_token);
 
-			mAuthSucceesCallback = null;
+			mAuthSuccessCallback = null;
 			mAuthFailCallback = null;
 		}
 
@@ -86,7 +89,7 @@ namespace MiniIT.Snipe
 			if (mAuthFailCallback != null)
 				mAuthFailCallback.Invoke(error_code);
 
-			mAuthSucceesCallback = null;
+			mAuthSuccessCallback = null;
 			mAuthFailCallback = null;
 		}
 	}
