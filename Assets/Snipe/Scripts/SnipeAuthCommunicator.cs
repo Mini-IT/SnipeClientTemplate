@@ -15,16 +15,12 @@ namespace MiniIT.Snipe
 		private const float LOGING_TOKEN_REFRESH_TIMEOUT = 1800.0f; // = 30 min
 
 		private static SnipeAuthCommunicator mInstance;
-		public static SnipeAuthCommunicator Instance
+		private static void InitInstance()
 		{
-			get
+			if (mInstance == null)
 			{
-				if (mInstance == null)
-				{
-					mInstance = new GameObject("SnipeAuthCommunicator").AddComponent<SnipeAuthCommunicator>();
-					GameObject.DontDestroyOnLoad(mInstance.gameObject);
-				}
-				return mInstance;
+				mInstance = new GameObject("SnipeAuthCommunicator").AddComponent<SnipeAuthCommunicator>();
+				GameObject.DontDestroyOnLoad(mInstance.gameObject);
 			}
 		}
 
@@ -77,13 +73,16 @@ namespace MiniIT.Snipe
 			}
 		}
 
-		public ProviderType AddAuthProvider<ProviderType>() where ProviderType : AuthProvider, new()
+		public static ProviderType AddAuthProvider<ProviderType>() where ProviderType : AuthProvider, new()
 		{
-			if (mAuthProviders == null)
-				mAuthProviders = new List<AuthProvider>();
+			if (mInstance == null)
+				InitInstance();
+
+			if (mInstance.mAuthProviders == null)
+				mInstance.mAuthProviders = new List<AuthProvider>();
 
 			ProviderType auth_provider = null;
-			foreach (AuthProvider provider in mAuthProviders)
+			foreach (AuthProvider provider in mInstance.mAuthProviders)
 			{
 				if (provider.GetType().Equals(typeof(ProviderType)))
 				{
@@ -94,22 +93,22 @@ namespace MiniIT.Snipe
 			if (auth_provider == null)
 			{
 				auth_provider = new ProviderType();
-				mAuthProviders.Add(auth_provider);
+				mInstance.mAuthProviders.Add(auth_provider);
 			}
 
 			return auth_provider;
 		}
 
-		public List<AuthProvider> GetAuthProviders()
+		public static List<AuthProvider> GetAuthProviders()
 		{
-			return mAuthProviders;
+			return mInstance?.mAuthProviders;
 		}
 
-		public ProviderType GetAuthProvider<ProviderType>() where ProviderType : AuthProvider
+		public static ProviderType GetAuthProvider<ProviderType>() where ProviderType : AuthProvider
 		{
-			if (mAuthProviders != null)
+			if (mInstance?.mAuthProviders != null)
 			{
-				foreach (AuthProvider provider in mAuthProviders)
+				foreach (AuthProvider provider in mInstance.mAuthProviders)
 				{
 					if (provider != null && provider is ProviderType)
 					{
@@ -121,11 +120,11 @@ namespace MiniIT.Snipe
 			return null;
 		}
 
-		public AuthProvider GetAuthProvider(string provider_id)
+		public static AuthProvider GetAuthProvider(string provider_id)
 		{
-			if (mAuthProviders != null)
+			if (mInstance?.mAuthProviders != null)
 			{
-				foreach (AuthProvider provider in mAuthProviders)
+				foreach (AuthProvider provider in mInstance.mAuthProviders)
 				{
 					if (provider != null && provider.ProviderId == provider_id)
 					{
@@ -137,31 +136,33 @@ namespace MiniIT.Snipe
 			return null;
 		}
 
-		public bool SetCurrentProvider(AuthProvider provider)
+		public static bool SetCurrentProvider(AuthProvider provider)
 		{
 			Debug.Log($"[SnipeAuthCommunicator] SetCurrentProvider - {provider?.ProviderId}");
 
+			InitInstance();
+
 			if (provider == null)
 			{
-				if (mCurrentProvider != null)
+				if (mInstance.mCurrentProvider != null)
 				{
-					mCurrentProvider.Dispose();
-					mCurrentProvider = null;
+					mInstance.mCurrentProvider.Dispose();
+					mInstance.mCurrentProvider = null;
 				}
 				return false;
 			}
 
-			if (mCurrentProvider == provider || mCurrentProvider?.ProviderId == provider?.ProviderId)
+			if (mInstance.mCurrentProvider == provider || mInstance.mCurrentProvider?.ProviderId == provider?.ProviderId)
 				return true;
 
-			if (mAuthProviders != null)
+			if (mInstance.mAuthProviders != null)
 			{
-				if (mAuthProviders.IndexOf(provider) >= 0)
+				if (mInstance.mAuthProviders.IndexOf(provider) >= 0)
 				{
-					if (mCurrentProvider != null)
-						mCurrentProvider.Dispose();
+					if (mInstance.mCurrentProvider != null)
+						mInstance.mCurrentProvider.Dispose();
 
-					mCurrentProvider = provider;
+					mInstance.mCurrentProvider = provider;
 					return true;
 				}
 				else
@@ -169,10 +170,10 @@ namespace MiniIT.Snipe
 					var added_provider = GetAuthProvider(provider.ProviderId);
 					if (added_provider != null)
 					{
-						if (mCurrentProvider != null)
-							mCurrentProvider.Dispose();
+						if (mInstance.mCurrentProvider != null)
+							mInstance.mCurrentProvider.Dispose();
 
-						mCurrentProvider = added_provider;
+						mInstance.mCurrentProvider = added_provider;
 						return true;
 					}
 				}
@@ -181,11 +182,11 @@ namespace MiniIT.Snipe
 			return false;
 		}
 
-		public void BindAllProviders(bool force_all = false, BindProvider.BindResultCallback single_bind_callback = null)
+		public static void BindAllProviders(bool force_all = false, BindProvider.BindResultCallback single_bind_callback = null)
 		{
-			if (mAuthProviders != null)
+			if (mInstance?.mAuthProviders != null)
 			{
-				foreach (BindProvider provider in mAuthProviders)
+				foreach (BindProvider provider in mInstance.mAuthProviders)
 				{
 					if (provider != null && (force_all || !provider.AccountExists))
 					{
@@ -195,11 +196,12 @@ namespace MiniIT.Snipe
 			}
 		}
 
-		public void Authorize<ProviderType>(Action succeess_callback, Action fail_callback = null) where ProviderType : AuthProvider
+		public static void Authorize<ProviderType>(Action succeess_callback, Action fail_callback = null) where ProviderType : AuthProvider
 		{
-			mCurrentProvider = GetAuthProvider<ProviderType>();
+			InitInstance();
+			mInstance.mCurrentProvider = GetAuthProvider<ProviderType>();
 
-			if (mCurrentProvider == null)
+			if (mInstance.mCurrentProvider == null)
 			{
 				Debug.Log("[SnipeAuthCommunicator] Authorize<ProviderType> - provider not found");
 
@@ -209,15 +211,35 @@ namespace MiniIT.Snipe
 				return;
 			}
 
-			AuthorizeWithCurrentProvider(succeess_callback, fail_callback);
+			mInstance.AuthorizeWithCurrentProvider(succeess_callback, fail_callback);
 		}
 
-		public void Authorize(Action succeess_callback, Action fail_callback = null)
+		public static void Authorize(Action succeess_callback, Action fail_callback = null)
 		{
-			if (mCurrentProvider == null)
-				mCurrentProvider = GetNextAuthProvider();
+			InitInstance();
 
-			AuthorizeWithCurrentProvider(succeess_callback, fail_callback);
+			if (mInstance.mCurrentProvider == null)
+				mInstance.SwitchToNextAuthProvider();
+
+			mInstance.AuthorizeWithCurrentProvider(succeess_callback, fail_callback);
+		}
+
+		public static void Authorize(bool reset, Action succeess_callback, Action fail_callback = null)
+		{
+			if (reset && mInstance != null) // forget previous provider and start again from the beginning
+			{
+				ClearLoginToken();
+
+				AuthProvider prev_provider = mInstance.mCurrentProvider;
+
+				mInstance.mCurrentProvider = null; 
+				mInstance.SwitchToNextAuthProvider();
+
+				if (prev_provider != mInstance.mCurrentProvider)
+					prev_provider.Dispose();
+			}
+
+			Authorize(succeess_callback, fail_callback);
 		}
 
 		protected void AuthorizeWithCurrentProvider(Action succeess_callback, Action fail_callback = null)
@@ -231,10 +253,10 @@ namespace MiniIT.Snipe
 			mCurrentProvider.RequestAuth(OnCurrentProviderAuthSuccess, OnCurrentProviderAuthFail, reset_auth);
 		}
 
-		private AuthProvider GetNextAuthProvider(bool create_default = true)
+		private void SwitchToNextAuthProvider(bool create_default = true)
 		{
 			AuthProvider prev_provider = mCurrentProvider;
-			AuthProvider provider = null;
+			mCurrentProvider = null;
 
 			if (mAuthProviders != null && mAuthProviders.Count > 0)
 			{
@@ -248,16 +270,14 @@ namespace MiniIT.Snipe
 
 				if (mAuthProviders.Count > next_index)
 				{
-					provider = mAuthProviders[next_index];
+					mCurrentProvider = mAuthProviders[next_index];
 				}
 			}
 
-			if (provider == null && create_default)
+			if (mCurrentProvider == null && create_default)
 			{
-				provider = new DefaultAuthProvider();
+				mCurrentProvider = new DefaultAuthProvider();
 			}
-
-			return provider;
 		}
 
 		private void SwitchToDefaultAuthProvider()
@@ -307,7 +327,7 @@ namespace MiniIT.Snipe
 				if (mCurrentProvider != null)
 					mCurrentProvider.Dispose();
 
-				mCurrentProvider = GetNextAuthProvider();
+				SwitchToNextAuthProvider();
 				bool reset_auth = !(mCurrentProvider is DefaultAuthProvider) || string.IsNullOrEmpty(PlayerPrefs.GetString(SnipePrefs.AUTH_KEY));
 				mCurrentProvider.RequestAuth(OnCurrentProviderAuthSuccess, OnCurrentProviderAuthFail, reset_auth);
 			}

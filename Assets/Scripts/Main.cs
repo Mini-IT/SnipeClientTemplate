@@ -57,12 +57,12 @@ public class Main : MonoBehaviour
 	{
 		// Initialization of AuthProviders
 
-		SnipeAuthCommunicator.Instance.AddAuthProvider<AdvertisingIdAuthProvider>();
+		SnipeAuthCommunicator.AddAuthProvider<AdvertisingIdAuthProvider>();
 
 #if UNITY_ANDROID
-		SnipeAuthCommunicator.Instance.AddAuthProvider<GooglePlayAuthProvider>();
+		SnipeAuthCommunicator.AddAuthProvider<GooglePlayAuthProvider>();
 #elif UNITY_IOS
-		SnipeAuthCommunicator.Instance.AddAuthProvider<AppleGameCenterAuthProvider>();
+		SnipeAuthCommunicator.AddAuthProvider<AppleGameCenterAuthProvider>();
 #endif
 	}
 

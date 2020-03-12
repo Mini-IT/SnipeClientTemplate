@@ -74,7 +74,7 @@ namespace MiniIT.Snipe
 		{
 			Debug.Log("[SnipeCommunicator] GotoAuth");
 
-			SnipeAuthCommunicator.Instance.Authorize(OnAuthSucceeded, OnAuthFailed);
+			SnipeAuthCommunicator.Authorize(OnAuthSucceeded, OnAuthFailed);
 		}
 
 		protected void OnAuthSucceeded()
