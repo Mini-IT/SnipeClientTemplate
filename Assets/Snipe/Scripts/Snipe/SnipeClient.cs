@@ -70,7 +70,8 @@ namespace MiniIT.Snipe
 		private float mCheckConnectionTriggerTime = 0.0f;
 
 		private float mRealtimeSinceStartup;  // local variable for thread safety
-		private bool mApplicationIsActive = true;
+		private bool mApplicationFocusLost = false;
+		private bool mApplicationFocusGained = true;
 
 		private int mRequestId = 0;
 
@@ -185,7 +186,7 @@ namespace MiniIT.Snipe
 					return;
 			}
 
-			if (mApplicationIsActive && mConnected && mCheckConnectionTriggerTime > 0.0f && mRealtimeSinceStartup >= mCheckConnectionTriggerTime)
+			if (!mApplicationFocusLost && mConnected && mCheckConnectionTriggerTime > 0.0f && mRealtimeSinceStartup >= mCheckConnectionTriggerTime)
 			{
 				// Disconnect detected
 				if (DebugEnabled)
@@ -199,7 +200,18 @@ namespace MiniIT.Snipe
 
 			if (mConnected)
 			{
-				if (mHeartbeatTriggerTime > 0.0f && mRealtimeSinceStartup >= mHeartbeatTriggerTime)
+				if (mApplicationFocusLost && mApplicationFocusGained)
+				{
+					mApplicationFocusLost = false;
+
+					if (mHeartbeatEnabled)
+					{
+						ResetHeartbeatTime(true);
+						ResetCheckConnectionTime();
+						SendPingRequest();
+					}
+				}
+				else if (mHeartbeatTriggerTime > 0.0f && mRealtimeSinceStartup >= mHeartbeatTriggerTime)
 				{
 					ResetHeartbeatTime();
 					if (mHeartbeatEnabled)
@@ -556,19 +568,15 @@ namespace MiniIT.Snipe
 		{
 			Debug.Log($"[SnipeClient] OnApplicationFocus focus = {focus}");
 
-			mApplicationIsActive = focus;
-
 			if (focus)
 			{
-				if (mHeartbeatEnabled)
-				{
-					ResetHeartbeatTime(true);
-					ResetCheckConnectionTime();
-					SendPingRequest();
-				}
+				mApplicationFocusGained = true;
 			}
 			else
 			{
+				mApplicationFocusGained = false;
+				mApplicationFocusLost = true;
+
 				// cancel connection checking
 				mCheckConnectionTriggerTime = 0.0f;
 			}

@@ -321,11 +321,26 @@ namespace MiniIT.Snipe
 		
 		public void SendRequest(string message)
 		{
-			if (this.Connected)
+			if (this.Connected && !string.IsNullOrEmpty(message))
 			{
 				byte[] buffer = UTF8Encoding.UTF8.GetBytes(message);
-				mTcpClient.GetStream().Write(buffer, 0, buffer.Length);
-				mTcpClient.GetStream().WriteByte(0);  // every message ends with zero
+				try
+				{
+					var stream = mTcpClient.GetStream();
+					lock (stream)
+					{
+						stream.Write(buffer, 0, buffer.Length);
+						stream.WriteByte(0);  // every message ends with zero
+					}
+				}
+				catch (Exception)
+				{
+					//Debug.Log("[SnipeTCPClient] SendRequest failed: " + e.Message);
+
+					Disconnect();
+					if (OnConnectionLost != null)
+						OnConnectionLost.Invoke();
+				}
 			}
 		}
 		
