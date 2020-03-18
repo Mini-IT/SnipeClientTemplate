@@ -55,7 +55,7 @@ namespace MiniIT.Snipe
 			}
 			else
 			{
-				GotoAuth();
+				Authorize();
 			}
 		}
 
@@ -70,9 +70,9 @@ namespace MiniIT.Snipe
 			return false;
 		}
 
-		private void GotoAuth()
+		private void Authorize()
 		{
-			Debug.Log("[SnipeCommunicator] GotoAuth");
+			Debug.Log("[SnipeCommunicator] Authorize");
 
 			SnipeAuthCommunicator.Authorize(OnAuthSucceeded, OnAuthFailed);
 		}
@@ -97,6 +97,12 @@ namespace MiniIT.Snipe
 
 		protected virtual void InitClient(string tcp_host, int tcp_port, string web_socket_url = "")
 		{
+			if (LoggedIn)
+			{
+				Debug.LogWarning("[SnipeCommunicator] InitClient - already logged in");
+				return;
+			}
+			
 			if (Client == null)
 			{
 				Client = SnipeClient.CreateInstance(SnipeConfig.Instance.snipe_client_key, this.gameObject);
@@ -205,7 +211,7 @@ namespace MiniIT.Snipe
 					}
 					else if (error_code == "wrongToken" || error_code == "userNotFound")
 					{
-						GotoAuth();
+						Authorize();
 					}
 					else if (error_code == "userDisconnecting")
 					{

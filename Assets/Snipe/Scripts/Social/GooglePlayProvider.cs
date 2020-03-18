@@ -34,7 +34,17 @@ namespace MiniIT.Social
 			}
 		}
 
-		public bool AuthenticationFailed { get; private set; } = false;
+		public bool AuthenticationFailed
+		{
+			get
+			{
+				return PlayerPrefs.GetInt("GooglePlayProvider_AuthenticationFailed", 0) == 1;
+			}
+			set
+			{
+				PlayerPrefs.SetInt("GooglePlayProvider_AuthenticationFailed", value ? 1 : 0);
+			}
+		}
 
 		private List<Action> mOnInitializationSucceededCallbacks = null;
 		private List<Action> mOnInitializationFailedCallbacks = null;
@@ -60,6 +70,13 @@ namespace MiniIT.Social
 		
 		public override void Init(Action callback = null, Action fail_callback = null)
 		{
+			if (AuthenticationFailed)
+			{
+				if (fail_callback != null)
+					fail_callback.Invoke();
+				return;
+			}
+
 			if (callback != null)
 			{
 				if (mOnInitializationSucceededCallbacks == null)
@@ -90,6 +107,7 @@ namespace MiniIT.Social
 				((GooglePlayGames.PlayGamesPlatform)UnityEngine.Social.Active).SignOut();
 				Initialized = false;
 			}
+			base.Logout();
 		}
 #endif
 

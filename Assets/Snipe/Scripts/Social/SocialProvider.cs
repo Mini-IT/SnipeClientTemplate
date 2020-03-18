@@ -5,6 +5,8 @@ namespace MiniIT.Social
 {
 	public abstract class SocialProvider
 	{
+		public event Action LoggedOut;
+
 		public bool Initialized { get; protected set; }
 
 		public string NetworkType { get; protected set; }
@@ -19,6 +21,7 @@ namespace MiniIT.Social
 
 		public virtual void Logout()
 		{
+			LoggedOut?.Invoke();
 		}
 
 		public virtual string GetPlayerUserID()

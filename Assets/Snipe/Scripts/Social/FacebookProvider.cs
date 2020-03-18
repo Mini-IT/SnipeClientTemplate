@@ -93,12 +93,12 @@ namespace MiniIT.Social
 
 		public override void Logout()
 		{
-			base.Logout();
-
 			FB.LogOut();
 
 			PlayerProfile = null;
 			Initialized = false;
+			
+			base.Logout();
 		}
 		
 		public override string GetPlayerUserID()

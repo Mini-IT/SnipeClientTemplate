@@ -27,10 +27,23 @@ namespace MiniIT.Snipe
 			}
 			protected set
 			{
-				Debug.Log($"[BindProvider] ({ProviderId}) Set bind done flag to {value}");
+				bool current_value = PlayerPrefs.GetInt(BindDonePrefsKey, 0) == 1;
+				if (value != current_value)
+				{
+					Debug.Log($"[BindProvider] ({ProviderId}) Set bind done flag to {value}");
 
-				PlayerPrefs.SetInt(BindDonePrefsKey, value ? 1 : 0);
+					PlayerPrefs.SetInt(BindDonePrefsKey, value ? 1 : 0);
+
+					if (value)
+						OnBindDone();
+				}
 			}
+		}
+
+		public BindProvider() : base()
+		{
+			if (IsBindDone)
+				OnBindDone();
 		}
 
 		public virtual void RequestBind(BindResultCallback bind_callback = null)
@@ -93,11 +106,13 @@ namespace MiniIT.Snipe
 		protected virtual void OnCheckAuthExistsResponse(ExpandoObject data)
 		{
 			AccountExists = (data.SafeGetString("errorCode") == ERROR_OK);
-			//if (!AccountExists)
-			//	NeedToBind = true;
+			
+			bool is_me = data.SafeGetValue("isSame", false);
+			if (AccountExists && is_me)
+				IsBindDone = true;
 
 			if (mCheckAuthExistsCallback != null)
-				mCheckAuthExistsCallback.Invoke(this, AccountExists, data.SafeGetValue("isSame", false), data.SafeGetString("name"));
+				mCheckAuthExistsCallback.Invoke(this, AccountExists, is_me, data.SafeGetString("name"));
 
 			mCheckAuthExistsCallback = null;
 		}
@@ -110,6 +125,10 @@ namespace MiniIT.Snipe
 				mBindResultCallback.Invoke(this, error_code);
 
 			mBindResultCallback = null;
+		}
+
+		protected virtual void OnBindDone()
+		{
 		}
 
 		public override void Dispose()

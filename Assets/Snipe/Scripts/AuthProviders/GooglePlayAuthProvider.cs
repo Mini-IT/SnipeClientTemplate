@@ -9,11 +9,6 @@ public class GooglePlayAuthProvider : BindProvider
 	public const string PROVIDER_ID = "goog";
 	public override string ProviderId { get { return PROVIDER_ID; } }
 
-	//public static new bool IsBindDone
-	//{
-	//	get { return PlayerPrefs.GetInt(SnipePrefs.AUTH_BIND_DONE + PROVIDER_ID, 0) == 1; }
-	//}
-
 	public override void RequestAuth(AuthSuccessCallback success_callback, AuthFailCallback fail_callback, bool reset_auth = false)
 	{
 		mAuthSuccessCallback = success_callback;
@@ -128,5 +123,15 @@ public class GooglePlayAuthProvider : BindProvider
 
 		CheckAuthExists(GetUserId(), callback);
 		return true;
+	}
+
+	protected override void OnBindDone()
+	{
+		base.OnBindDone();
+
+		GooglePlayProvider.Instance.LoggedOut += () =>
+		{
+			IsBindDone = false;
+		};
 	}
 }

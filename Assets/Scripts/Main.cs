@@ -7,8 +7,6 @@ using MiniIT.Snipe;
 
 public class Main : MonoBehaviour
 {
-	private Server mServer;
-
 	private void Awake()
 	{
 		Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
@@ -19,10 +17,10 @@ public class Main : MonoBehaviour
 		InitConfig();
 		InitAuth();
 
-		mServer = new GameObject("SnipeCommunicator").AddComponent<Server>();
-		mServer.LoginSucceeded += OnLogin;
-		mServer.ConnectionFailed += OnConnectionFailed;
-		mServer.StartCommunicator();
+		Server server = new GameObject("SnipeCommunicator").AddComponent<Server>();
+		server.LoginSucceeded += OnLogin;
+		server.ConnectionFailed += OnConnectionFailed;
+		server.StartCommunicator();
 	}
 
 	private void InitConfig()
@@ -88,38 +86,38 @@ public class Main : MonoBehaviour
 
 	private void OnDestroy()
 	{
-		if (mServer != null)
+		if (Server.Instance != null)
 		{
-			mServer.LoginSucceeded -= OnLogin;
-			mServer.ConnectionFailed -= OnConnectionFailed;
+			Server.Instance.LoginSucceeded -= OnLogin;
+			Server.Instance.ConnectionFailed -= OnConnectionFailed;
 		}
 	}
 
 	private void OnGUI()
 	{
-		if (mServer != null)
+		if (Server.Instance != null)
 		{
-			GUI.Label(new Rect(50, 50, 200, 50), mServer.LoggedIn ? $"Hello {SnipeAuthCommunicator.UserID}" : "You are not logged in");
+			GUI.Label(new Rect(50, 50, 200, 50), Server.Instance.LoggedIn ? $"Hello {SnipeAuthCommunicator.UserID}" : "You are not logged in");
 			GUI.Label(new Rect(50, 70, 200, 50), SnipeAuthCommunicator.JustRegistered ? "New account registered" : "Welcome back!");
 
-			if (mServer.LoggedIn && mServer.Player.PlayerData != null)
+			if (Server.Instance.LoggedIn && Server.Instance.Player.PlayerData != null)
 			{
-				GUI.Label(new Rect(50, 150, 200, 50), $"You have {mServer.Player.PlayerData.MoneySoft} coins");
-				GUI.Label(new Rect(50, 170, 200, 50), $"You have {mServer.Player.PlayerData.MoneyHard} gold");
-				GUI.Label(new Rect(50, 190, 200, 50), $"Energy: {mServer.Player.PlayerData.Energy} / {mServer.Static.MaxEnergy}");
+				GUI.Label(new Rect(50, 150, 200, 50), $"You have {Server.Instance.Player.PlayerData.MoneySoft} coins");
+				GUI.Label(new Rect(50, 170, 200, 50), $"You have {Server.Instance.Player.PlayerData.MoneyHard} gold");
+				GUI.Label(new Rect(50, 190, 200, 50), $"Energy: {Server.Instance.Player.PlayerData.Energy} / {Server.Instance.Static.MaxEnergy}");
 
-				GUI.Label(new Rect(50, 220, 200, 50), $"VIP time left: {mServer.Player.PlayerData.VipTimeLeft.ToString("F0")} seconds");
+				GUI.Label(new Rect(50, 220, 200, 50), $"VIP time left: {Server.Instance.Player.PlayerData.VipTimeLeft.ToString("F0")} seconds");
 
-				if (mServer.Player.PlayerData.VipTimeLeft <= 0.0f && GUI.Button(new Rect(50, 250, 200, 50), "Buy VIP"))
+				if (Server.Instance.Player.PlayerData.VipTimeLeft <= 0.0f && GUI.Button(new Rect(50, 250, 200, 50), "Buy VIP"))
 				{
-					mServer.Player.BuyVip();
+					Server.Instance.Player.BuyVip();
 				}
 
-				if (!mServer.Race.Active)
+				if (!Server.Instance.Race.Active)
 				{
 					if (GUI.Button(new Rect(50, 400, 200, 50), "Race"))
 					{
-						mServer.Race.MatchmakingAdd();
+						Server.Instance.Race.MatchmakingAdd();
 					}
 				}
 			}

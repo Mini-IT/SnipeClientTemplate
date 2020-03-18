@@ -131,6 +131,16 @@ public class AppleGameCenterAuthProvider : BindProvider
 		return true;
 	}
 
+	protected override void OnBindDone()
+	{
+		base.OnBindDone();
+
+		AppleGameCenterProvider.Instance.LoggedOut += () =>
+		{
+			IsBindDone = false;
+		};
+	}
+
 	#region GenerateIdentityVerificationSignature
 	// https://gist.github.com/BastianBlokland/bbc02a407b05beaf3f55ead3dd10f808
 

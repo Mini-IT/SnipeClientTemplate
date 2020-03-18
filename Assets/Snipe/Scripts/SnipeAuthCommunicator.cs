@@ -14,6 +14,9 @@ namespace MiniIT.Snipe
 
 		private const float LOGING_TOKEN_REFRESH_TIMEOUT = 1800.0f; // = 30 min
 
+		public delegate void AccountRegisterRespondedHandler(string error_code);
+		public static event AccountRegisterRespondedHandler AccountRegisterResponded;
+
 		private static SnipeAuthCommunicator mInstance;
 		private static void InitInstance()
 		{
@@ -379,6 +382,8 @@ namespace MiniIT.Snipe
 				{
 					InvokeAuthFailCallback();
 				}
+
+				AccountRegisterResponded?.Invoke(error_code);
 			});
 		}
 

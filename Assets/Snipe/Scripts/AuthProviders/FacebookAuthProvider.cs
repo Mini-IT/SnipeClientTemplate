@@ -96,4 +96,14 @@ public class FacebookAuthProvider : BindProvider
 
 		return false;
 	}
+
+	protected override void OnBindDone()
+	{
+		base.OnBindDone();
+
+		FacebookProvider.Instance.LoggedOut += () =>
+		{
+			IsBindDone = false;
+		};
+	}
 }
