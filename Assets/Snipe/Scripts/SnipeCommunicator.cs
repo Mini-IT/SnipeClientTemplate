@@ -49,6 +49,8 @@ namespace MiniIT.Snipe
 
 		public virtual void StartCommunicator()
 		{
+			DontDestroyOnLoad(this.gameObject);
+			
 			if (CheckLoginParams())
 			{
 				InitClient();
@@ -112,7 +114,6 @@ namespace MiniIT.Snipe
 				Client.ConnectionFailed += OnConnectionFailed;
 				Client.ConnectionLost += OnConnectionFailed;
 				Client.DebugEnabled = this.DebugEnabled;
-				DontDestroyOnLoad(this.gameObject);
 			}
 			if (Client.Connected)
 				RequestLogin();
