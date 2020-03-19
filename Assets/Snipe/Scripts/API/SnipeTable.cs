@@ -13,6 +13,8 @@ namespace MiniIT.Snipe
 	{
 		public static string Path;
 
+		public bool Loaded { get; private set; } = false;
+
 		internal IEnumerator LoadTableCoroutine(string table_name)
 		{
 			string url = string.Format("{0}/{1}.json.gz", Path, table_name);
@@ -53,6 +55,7 @@ namespace MiniIT.Snipe
 									}
 
 									UnityEngine.Debug.Log("[SnipeTable] table ready - " + table_name);
+									this.Loaded = true;
 								}
 							}
 						}
