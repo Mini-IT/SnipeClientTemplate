@@ -13,6 +13,9 @@ namespace MiniIT.Snipe
 	{
 		public static string Path;
 
+		public delegate void LoadingFinishedHandler(bool success);
+		public event LoadingFinishedHandler LoadingFinished;
+
 		public bool Loaded { get; private set; } = false;
 
 		internal IEnumerator LoadTableCoroutine(string table_name)
@@ -66,6 +69,8 @@ namespace MiniIT.Snipe
 					}
 				}
 			}
+
+			LoadingFinished?.Invoke(this.Loaded);
 		}
 
 		protected virtual void AddTableItem(ExpandoObject item_data)
