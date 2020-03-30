@@ -23,49 +23,55 @@ namespace MiniIT.Snipe
 			string url = string.Format("{0}/{1}.json.gz", Path, table_name);
 			UnityEngine.Debug.Log("[SnipeTable] Loading table " + url);
 
-			using (UnityWebRequest loader = new UnityWebRequest(url))
+			int retry = 0;
+			while (!this.Loaded && retry <= 1)
 			{
-				loader.downloadHandler = new DownloadHandlerBuffer();
-				yield return loader.SendWebRequest();
-				if (loader.isNetworkError || loader.isHttpError)
+				retry++;
+
+				using (UnityWebRequest loader = new UnityWebRequest(url))
 				{
-					UnityEngine.Debug.Log("[SnipeTable] Network error: Failed to load table - " + table_name);
-				}
-				else
-				{
-					UnityEngine.Debug.Log("[SnipeTable] table file loaded - " + table_name);
-					try
+					loader.downloadHandler = new DownloadHandlerBuffer();
+					yield return loader.SendWebRequest();
+					if (loader.isNetworkError || loader.isHttpError)
 					{
-						if (loader.downloadHandler.data == null || loader.downloadHandler.data.Length < 1)
+						UnityEngine.Debug.Log("[SnipeTable] Network error: Failed to load table - " + table_name);
+					}
+					else
+					{
+						UnityEngine.Debug.Log("[SnipeTable] table file loaded - " + table_name);
+						try
 						{
-							UnityEngine.Debug.Log("[SnipeTable] Error: loaded data is null or empty. Table: " + table_name);
-						}
-						else
-						{
-							using (GZipStream gzip = new GZipStream(new MemoryStream(loader.downloadHandler.data, false), CompressionMode.Decompress))
+							if (loader.downloadHandler.data == null || loader.downloadHandler.data.Length < 1)
 							{
-								using (StreamReader reader = new StreamReader(gzip))
+								UnityEngine.Debug.Log("[SnipeTable] Error: loaded data is null or empty. Table: " + table_name);
+							}
+							else
+							{
+								using (GZipStream gzip = new GZipStream(new MemoryStream(loader.downloadHandler.data, false), CompressionMode.Decompress))
 								{
-									string json_string = reader.ReadToEnd();
-									ExpandoObject data = ExpandoObject.FromJSONString(json_string);
-
-									if (data["list"] is List<object> list)
+									using (StreamReader reader = new StreamReader(gzip))
 									{
-										foreach (ExpandoObject item_data in list)
-										{
-											AddTableItem(item_data);
-										}
-									}
+										string json_string = reader.ReadToEnd();
+										ExpandoObject data = ExpandoObject.FromJSONString(json_string);
 
-									UnityEngine.Debug.Log("[SnipeTable] table ready - " + table_name);
-									this.Loaded = true;
+										if (data["list"] is List<object> list)
+										{
+											foreach (ExpandoObject item_data in list)
+											{
+												AddTableItem(item_data);
+											}
+										}
+
+										UnityEngine.Debug.Log("[SnipeTable] table ready - " + table_name);
+										this.Loaded = true;
+									}
 								}
 							}
 						}
-					}
-					catch (Exception)
-					{
-						UnityEngine.Debug.Log("[SnipeTable] failed to parse table - " + table_name);
+						catch (Exception)
+						{
+							UnityEngine.Debug.Log("[SnipeTable] failed to parse table - " + table_name);
+						}
 					}
 				}
 			}
