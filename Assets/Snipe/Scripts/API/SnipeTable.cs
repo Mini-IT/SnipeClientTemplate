@@ -13,19 +13,35 @@ namespace MiniIT.Snipe
 	{
 		public static string Path;
 
+		private const int MAX_LOADERS_COUNT = 5;
+		private static int mLoadersCount = 0;
+
 		public delegate void LoadingFinishedHandler(bool success);
 		public event LoadingFinishedHandler LoadingFinished;
 
 		public bool Loaded { get; private set; } = false;
+		public bool LoadingFailed { get; private set; } = false;
 
 		internal IEnumerator LoadTableCoroutine(string table_name)
 		{
+			while (mLoadersCount >= MAX_LOADERS_COUNT)
+				yield return 0;
+			mLoadersCount++;
+
 			string url = string.Format("{0}/{1}.json.gz", Path, table_name);
 			UnityEngine.Debug.Log("[SnipeTable] Loading table " + url);
 
+			this.LoadingFailed = false;
+
 			int retry = 0;
-			while (!this.Loaded && retry <= 1)
+			while (!this.Loaded && retry <= 2)
 			{
+				if (retry > 0)
+				{
+					yield return new WaitForSecondsRealtime(0.1f);
+					UnityEngine.Debug.Log($"[SnipeTable] Retry #{retry} to load table - {table_name}");
+				}
+
 				retry++;
 
 				using (UnityWebRequest loader = new UnityWebRequest(url))
@@ -76,7 +92,10 @@ namespace MiniIT.Snipe
 				}
 			}
 
+			this.LoadingFailed = !this.Loaded;
 			LoadingFinished?.Invoke(this.Loaded);
+
+			mLoadersCount--;
 		}
 
 		protected virtual void AddTableItem(ExpandoObject item_data)
