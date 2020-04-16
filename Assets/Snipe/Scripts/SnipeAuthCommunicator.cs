@@ -377,6 +377,8 @@ namespace MiniIT.Snipe
 
 					SwitchToDefaultAuthProvider();
 					mCurrentProvider.RequestAuth(OnCurrentProviderAuthSuccess, OnCurrentProviderAuthFail);
+					
+					BindAllProviders(false);
 				}
 				else
 				{
