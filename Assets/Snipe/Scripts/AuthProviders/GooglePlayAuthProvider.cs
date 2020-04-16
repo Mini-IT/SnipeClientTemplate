@@ -33,10 +33,27 @@ public class GooglePlayAuthProvider : BindProvider
 				return;
 			}
 		}
+		else
+		{
+			GooglePlayProvider.InstanceInitializationComplete -= OnGooglePlayProviderInitializationComplete;
+			GooglePlayProvider.InstanceInitializationComplete += OnGooglePlayProviderInitializationComplete;
+		}
 #endif
 
 		InvokeAuthFailCallback(AuthProvider.ERROR_NOT_INITIALIZED);
 	}
+
+#if UNITY_ANDROID
+	private void OnGooglePlayProviderInitializationComplete()
+	{
+		GooglePlayProvider.InstanceInitializationComplete -= OnGooglePlayProviderInitializationComplete;
+
+		if (!string.IsNullOrEmpty(SnipeAuthCommunicator.LoginToken))
+		{
+			CheckAuthExists(null);
+		}
+	}
+#endif
 
 	public override void RequestBind(BindResultCallback bind_callback = null)
 	{

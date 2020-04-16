@@ -10,6 +10,8 @@ namespace MiniIT.Social
 {
 	public class FacebookProvider : SocialProvider //, ISocNetUserWallPoster, ISocNetUserRequestSender, ISocNetInvitableFriendsRequester
 	{
+		public static event Action InstanceInitializationComplete;
+
 		private static FacebookProvider sInstance;
 		public static FacebookProvider Instance
 		{
@@ -131,6 +133,8 @@ namespace MiniIT.Social
 			mInitializationFailedCallback = null;
 
 			DispatchEventInitializationComplete();
+			
+			InstanceInitializationComplete?.Invoke();
 		}
 
 		//private void OnHideUnity(bool isGameShown)
@@ -295,15 +299,7 @@ namespace MiniIT.Social
 			SocialUserProfile profile = new SocialUserProfile(profile_id, this.NetworkType);
 			profile.FirstName   = data.SafeGetString("first_name");
 			profile.LastName    = data.SafeGetString("last_name");
-			if (data.ContainsKey("picture") && data["picture"] is ExpandoObject picture_data)
-			{ 
-				if (picture_data["data"] is ExpandoObject picture_internal_data)
-				{
-					profile.PhotoSmallURL = picture_internal_data.SafeGetString("url");
-				}
-			}
-			if (string.IsNullOrEmpty(profile.PhotoSmallURL))
-				profile.PhotoSmallURL = "https://graph.facebook.com/" + profile.Id + "/picture/?width=50&height=50";
+			profile.PhotoSmallURL = "https://graph.facebook.com/" + profile.Id + "/picture/?width=50&height=50";
 			profile.PhotoMediumURL = "https://graph.facebook.com/" + profile.Id + "/picture/?width=100&height=100";
 			//profile.Link         = data.ContainsKey("link") ? Convert.ToString(data["link"]) : data.ContainsKey("profile_url") ? Convert.ToString(data["profile_url"]) : ("http://www.facebook.com/" + profile.Id);
 			//profile.Gender       = (((string)(data.ContainsKey("sex") ? data["sex"] : data["gender"]) != "female")) ? 1 : 2;  // 1-мужской, 2-женский; приходит: "male"/"female"

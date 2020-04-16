@@ -15,13 +15,26 @@ public class FacebookAuthProvider : BindProvider
 		mAuthSuccessCallback = success_callback;
 		mAuthFailCallback = fail_callback;
 
-		if (FB.IsLoggedIn && AccessToken.CurrentAccessToken != null) // FacebookProvider.InstanceInitialized)
+		if (FB.IsLoggedIn && AccessToken.CurrentAccessToken != null)
 		{
 			RequestLogin(ProviderId, AccessToken.CurrentAccessToken.UserId, AccessToken.CurrentAccessToken.TokenString, reset_auth);
 			return;
 		}
 
+		FacebookProvider.InstanceInitializationComplete -= OnFacebookProviderInitializationComplete;
+		FacebookProvider.InstanceInitializationComplete += OnFacebookProviderInitializationComplete;
+
 		InvokeAuthFailCallback(AuthProvider.ERROR_NOT_INITIALIZED);
+	}
+
+	private void OnFacebookProviderInitializationComplete()
+	{
+		FacebookProvider.InstanceInitializationComplete -= OnFacebookProviderInitializationComplete;
+
+		if (!string.IsNullOrEmpty(SnipeAuthCommunicator.LoginToken))
+		{
+			CheckAuthExists(null);
+		}
 	}
 
 	public override void RequestBind(BindResultCallback bind_callback = null)
@@ -35,7 +48,7 @@ public class FacebookAuthProvider : BindProvider
 
 		if (!string.IsNullOrEmpty(auth_login) && !string.IsNullOrEmpty(auth_token))
 		{
-			if (FB.IsLoggedIn && AccessToken.CurrentAccessToken != null) // FacebookProvider.InstanceInitialized)
+			if (FB.IsLoggedIn && AccessToken.CurrentAccessToken != null)
 			{
 				ExpandoObject data = new ExpandoObject()
 				{

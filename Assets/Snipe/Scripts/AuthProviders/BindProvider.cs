@@ -103,7 +103,7 @@ namespace MiniIT.Snipe
 			InvokeBindResultCallback(error_code);
 		}
 
-		protected virtual void OnCheckAuthExistsResponse(ExpandoObject data)
+		protected void OnCheckAuthExistsResponse(ExpandoObject data)
 		{
 			AccountExists = (data.SafeGetString("errorCode") == ERROR_OK);
 			
@@ -115,6 +115,11 @@ namespace MiniIT.Snipe
 				mCheckAuthExistsCallback.Invoke(this, AccountExists, is_me, data.SafeGetString("name"));
 
 			mCheckAuthExistsCallback = null;
+
+			if (!AccountExists)
+			{
+				RequestBind();
+			}
 		}
 
 		protected virtual void InvokeBindResultCallback(string error_code)

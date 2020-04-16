@@ -13,6 +13,8 @@ namespace MiniIT.Social
 {
 	public class GooglePlayProvider : SocialProvider
 	{
+		public static event Action InstanceInitializationComplete;
+
 		public const string DUMMY_AVATAR_URL = ""; //"https://cdn.tuner-life.com/tl2/dummyavatar50.png";
 
 		private static GooglePlayProvider sInstance;
@@ -143,6 +145,8 @@ namespace MiniIT.Social
 
 				// Dispatch event
 				DispatchEventInitializationFailed();
+
+				InstanceInitializationComplete?.Invoke();
 			}
 		}
 

@@ -41,10 +41,27 @@ public class AppleGameCenterAuthProvider : BindProvider
 				return;
 			}
 		}
+		else
+		{
+			AppleGameCenterProvider.InstanceInitializationComplete -= OnAppleGameCenterProviderInitializationComplete;
+			AppleGameCenterProvider.InstanceInitializationComplete += OnAppleGameCenterProviderInitializationComplete;
+		}
 #endif
 
 		InvokeAuthFailCallback(AuthProvider.ERROR_NOT_INITIALIZED);
 	}
+
+#if UNITY_IOS
+	private void OnAppleGameCenterProviderInitializationComplete()
+	{
+		AppleGameCenterProvider.InstanceInitializationComplete -= OnAppleGameCenterProviderInitializationComplete;
+
+		if (!string.IsNullOrEmpty(SnipeAuthCommunicator.LoginToken))
+		{
+			CheckAuthExists(null);
+		}
+	}
+#endif
 
 	public override void RequestBind(BindResultCallback bind_callback = null)
 	{
@@ -141,7 +158,7 @@ public class AppleGameCenterAuthProvider : BindProvider
 		};
 	}
 
-	#region GenerateIdentityVerificationSignature
+#region GenerateIdentityVerificationSignature
 	// https://gist.github.com/BastianBlokland/bbc02a407b05beaf3f55ead3dd10f808
 
 #if UNITY_IOS
@@ -193,5 +210,5 @@ public class AppleGameCenterAuthProvider : BindProvider
 		}
 	}
 #endif
-	#endregion // GenerateIdentityVerificationSignature
+#endregion // GenerateIdentityVerificationSignature
 }
