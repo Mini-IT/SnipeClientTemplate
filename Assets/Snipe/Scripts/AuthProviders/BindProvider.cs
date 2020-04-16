@@ -6,7 +6,6 @@ namespace MiniIT.Snipe
 	public class BindProvider : AuthProvider
 	{
 		public bool AccountExists { get; protected set; } = false;
-		//public bool NeedToBind { get; protected set; } = false;
 
 		public delegate void BindResultCallback(BindProvider provider, string error_code);
 		public delegate void CheckAuthExistsCallback(BindProvider provider, bool exists, bool is_me, string user_name = null);
