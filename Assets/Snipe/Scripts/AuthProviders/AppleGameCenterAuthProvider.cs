@@ -54,6 +54,8 @@ public class AppleGameCenterAuthProvider : BindProvider
 #if UNITY_IOS
 	private void OnAppleGameCenterProviderInitializationComplete()
 	{
+		Debug.Log("[AppleGameCenterAuthProvider] OnAppleGameCenterProviderInitializationComplete");
+
 		AppleGameCenterProvider.InstanceInitializationComplete -= OnAppleGameCenterProviderInitializationComplete;
 
 		if (!string.IsNullOrEmpty(SnipeAuthCommunicator.LoginToken))
@@ -139,7 +141,7 @@ public class AppleGameCenterAuthProvider : BindProvider
 		return AppleGameCenterProvider.InstanceInitialized ? AppleGameCenterProvider.Instance.PlayerProfile.Id : "";
 	}
 
-	public override bool CheckAuthExists(CheckAuthExistsCallback callback)
+	public override bool CheckAuthExists(CheckAuthExistsCallback callback = null)
 	{
 		if (!AppleGameCenterProvider.InstanceInitialized)
 			return false;

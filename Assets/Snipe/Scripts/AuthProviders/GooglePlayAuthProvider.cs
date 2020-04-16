@@ -46,6 +46,8 @@ public class GooglePlayAuthProvider : BindProvider
 #if UNITY_ANDROID
 	private void OnGooglePlayProviderInitializationComplete()
 	{
+		Debug.Log("[GooglePlayAuthProvider] OnGooglePlayProviderInitializationComplete");
+
 		GooglePlayProvider.InstanceInitializationComplete -= OnGooglePlayProviderInitializationComplete;
 
 		if (!string.IsNullOrEmpty(SnipeAuthCommunicator.LoginToken))
@@ -133,7 +135,7 @@ public class GooglePlayAuthProvider : BindProvider
 		return GooglePlayProvider.InstanceInitialized ? GooglePlayProvider.Instance.PlayerProfile.Id : "";
 	}
 
-	public override bool CheckAuthExists(CheckAuthExistsCallback callback)
+	public override bool CheckAuthExists(CheckAuthExistsCallback callback = null)
 	{
 		if (!GooglePlayProvider.InstanceInitialized)
 			return false;

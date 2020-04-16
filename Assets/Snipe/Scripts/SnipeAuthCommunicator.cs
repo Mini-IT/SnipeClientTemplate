@@ -11,11 +11,15 @@ namespace MiniIT.Snipe
 	{
 		protected const string REQUEST_USER_REGISTER = "auth/user.register";
 		protected const string REQUEST_USER_EXISTS = "auth/user.exists";
+		protected const string REQUEST_CLAIM_RESTORE_TOKEN = "auth/user.claimRestoreToken";
 
 		private const float LOGING_TOKEN_REFRESH_TIMEOUT = 1800.0f; // = 30 min
 
 		public delegate void AccountRegisterRespondedHandler(string error_code);
 		public static event AccountRegisterRespondedHandler AccountRegisterResponded;
+
+		public delegate void AccountBindingCollisionHandler(BindProvider provider, string user_name = null);
+		public static event AccountBindingCollisionHandler AccountBindingCollision;
 
 		private static SnipeAuthCommunicator mInstance;
 		private static void InitInstance()
@@ -56,6 +60,8 @@ namespace MiniIT.Snipe
 
 		private Action mAuthSucceededCallback;
 		private Action mAuthFailedCallback;
+
+		private bool mRebindAllProviders = false;
 
 		// private constructor
 		//private SnipeAuthCommunicator()
@@ -199,6 +205,20 @@ namespace MiniIT.Snipe
 			}
 		}
 
+		private static void ClearAllBindings()
+		{
+			if (mInstance?.mAuthProviders != null)
+			{
+				foreach (BindProvider provider in mInstance.mAuthProviders)
+				{
+					if (provider != null)
+					{
+						PlayerPrefs.DeleteKey(provider.BindDonePrefsKey);
+					}
+				}
+			}
+		}
+
 		public static void Authorize<ProviderType>(Action succeess_callback, Action fail_callback = null) where ProviderType : AuthProvider
 		{
 			InitInstance();
@@ -243,6 +263,61 @@ namespace MiniIT.Snipe
 			}
 
 			Authorize(succeess_callback, fail_callback);
+		}
+
+		/// <summary>
+		/// Clear all auth data an authorize using specified <c>AuthProvider</c>.
+		/// </summary>
+		public static void ClearAuthDataAndSetCurrentProvider(AuthProvider provider)
+		{
+			PlayerPrefs.DeleteKey(SnipePrefs.LOGIN_USER_ID);
+			SnipeAuthCommunicator.ClearLoginToken();
+			SnipeAuthCommunicator.SetCurrentProvider(provider);
+		}
+
+		/// <summary>
+		/// After successful authorization with current provider <c>BindAllProviders(true)</c> will be called
+		/// </summary>
+		public static void RebindAllProvidersAfterAuthorization()
+		{
+			if (mInstance != null)
+				mInstance.mRebindAllProviders = true;
+		}
+
+		public static void ClaimRestoreToken(string token, Action<bool> callback)
+		{
+			if (mInstance == null)
+				return;
+
+			SingleRequestClient.Request(SnipeConfig.Instance.auth, 
+				new ExpandoObject()
+				{
+					["messageType"] = REQUEST_CLAIM_RESTORE_TOKEN,
+					["token"] = token,
+				},
+				(response) =>
+				{
+					string error_code = response?.SafeGetString("errorCode");
+					if (error_code == "ok")
+					{
+						ClearAllBindings();
+						UserID = 0;
+						SnipeAuthCommunicator.LoginToken = "";
+						PlayerPrefs.SetString(SnipePrefs.AUTH_UID, response.SafeGetString("uid"));
+						PlayerPrefs.SetString(SnipePrefs.AUTH_KEY, response.SafeGetString("password"));
+						PlayerPrefs.Save();
+						callback?.Invoke(true);
+					}
+					else
+					{
+						callback?.Invoke(false);
+					}
+				});
+		}
+
+		internal static void InvokeAccountBindingCollisionEvent(BindProvider provider, string user_name = null)
+		{
+			AccountBindingCollision?.Invoke(provider, user_name);
 		}
 
 		protected void AuthorizeWithCurrentProvider(Action succeess_callback, Action fail_callback = null)
@@ -305,11 +380,16 @@ namespace MiniIT.Snipe
 
 			mCurrentProvider?.Dispose();
 			mCurrentProvider = null;
+
+			BindAllProviders(mRebindAllProviders);
+			mRebindAllProviders = false;
 		}
 
 		private void OnCurrentProviderAuthFail(string error_code)
 		{
 			Debug.Log("[SnipeAuthCommunicator] OnCurrentProviderAuthFail (" + (mCurrentProvider != null ? mCurrentProvider.ProviderId : "null") + ") error_code: " + error_code);
+
+			mRebindAllProviders = false;
 
 			if (mCurrentProvider is DefaultAuthProvider)
 			{
@@ -377,7 +457,7 @@ namespace MiniIT.Snipe
 
 					SwitchToDefaultAuthProvider();
 					mCurrentProvider.RequestAuth(OnCurrentProviderAuthSuccess, OnCurrentProviderAuthFail);
-					
+
 					BindAllProviders(false);
 				}
 				else

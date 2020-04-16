@@ -68,7 +68,7 @@ namespace MiniIT.Snipe
 			AccountExists = (data?.SafeGetString("errorCode") == ERROR_OK);
 		}
 
-		public virtual bool CheckAuthExists(CheckAuthExistsCallback callback)
+		public virtual bool CheckAuthExists(CheckAuthExistsCallback callback = null)
 		{
 			// Override this method.
 			return false;
@@ -112,13 +112,19 @@ namespace MiniIT.Snipe
 				IsBindDone = true;
 
 			if (mCheckAuthExistsCallback != null)
+			{
 				mCheckAuthExistsCallback.Invoke(this, AccountExists, is_me, data.SafeGetString("name"));
-
-			mCheckAuthExistsCallback = null;
+				mCheckAuthExistsCallback = null;
+			}
 
 			if (!AccountExists)
 			{
 				RequestBind();
+			}
+			else if (!is_me)
+			{
+				Debug.Log($"[BindProvider] ({ProviderId}) OnCheckAuthExistsResponse - another account found - InvokeAccountBindingCollisionEvent");
+				SnipeAuthCommunicator.InvokeAccountBindingCollisionEvent(this, data.SafeGetString("name"));
 			}
 		}
 

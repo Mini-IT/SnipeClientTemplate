@@ -29,6 +29,8 @@ public class FacebookAuthProvider : BindProvider
 
 	private void OnFacebookProviderInitializationComplete()
 	{
+		Debug.Log("[FacebookAuthProvider] OnFacebookProviderInitializationComplete");
+
 		FacebookProvider.InstanceInitializationComplete -= OnFacebookProviderInitializationComplete;
 
 		if (!string.IsNullOrEmpty(SnipeAuthCommunicator.LoginToken))
@@ -99,7 +101,7 @@ public class FacebookAuthProvider : BindProvider
 		return "";
 	}
 
-	public override bool CheckAuthExists(CheckAuthExistsCallback callback)
+	public override bool CheckAuthExists(CheckAuthExistsCallback callback = null)
 	{
 		if (FB.IsLoggedIn && AccessToken.CurrentAccessToken != null)
 		{

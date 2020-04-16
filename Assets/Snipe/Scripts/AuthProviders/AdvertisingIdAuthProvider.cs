@@ -135,7 +135,7 @@ public class AdvertisingIdAuthProvider : BindProvider
 		return AdvertisingId;
 	}
 
-	public override bool CheckAuthExists(CheckAuthExistsCallback callback)
+	public override bool CheckAuthExists(CheckAuthExistsCallback callback = null)
 	{
 		void advertising_id_callback(string advertising_id, bool tracking_enabled, string error)
 		{
