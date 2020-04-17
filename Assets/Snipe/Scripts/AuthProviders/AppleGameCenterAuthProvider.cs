@@ -110,6 +110,9 @@ public class AppleGameCenterAuthProvider : BindProvider
 				return;
 			}
 		}
+
+		AppleGameCenterProvider.InstanceInitializationComplete -= OnAppleGameCenterProviderInitializationComplete;
+		AppleGameCenterProvider.InstanceInitializationComplete += OnAppleGameCenterProviderInitializationComplete;
 #endif
 
 		InvokeBindResultCallback(ERROR_NOT_INITIALIZED);

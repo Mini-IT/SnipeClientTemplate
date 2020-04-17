@@ -104,6 +104,9 @@ public class GooglePlayAuthProvider : BindProvider
 				return;
 			}
 		}
+
+		GooglePlayProvider.InstanceInitializationComplete -= OnGooglePlayProviderInitializationComplete;
+		GooglePlayProvider.InstanceInitializationComplete += OnGooglePlayProviderInitializationComplete;
 #endif
 
 		InvokeBindResultCallback(ERROR_NOT_INITIALIZED);

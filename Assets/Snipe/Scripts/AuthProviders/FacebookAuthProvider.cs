@@ -69,6 +69,9 @@ public class FacebookAuthProvider : BindProvider
 			}
 		}
 
+		FacebookProvider.InstanceInitializationComplete -= OnFacebookProviderInitializationComplete;
+		FacebookProvider.InstanceInitializationComplete += OnFacebookProviderInitializationComplete;
+
 		InvokeBindResultCallback(ERROR_NOT_INITIALIZED);
 	}
 
