@@ -122,7 +122,7 @@ public class AppleGameCenterAuthProvider : BindProvider
 	{
 		base.OnAuthLoginResponse(data);
 
-		string error_code = data.SafeGetString("errorCode");
+		string error_code = data?.SafeGetString("errorCode");
 
 		if (error_code == ERROR_OK)
 		{

@@ -111,7 +111,7 @@ public class AdvertisingIdAuthProvider : BindProvider
 	{
 		base.OnAuthLoginResponse(data);
 
-		string error_code = data.SafeGetString("errorCode");
+		string error_code = data?.SafeGetString("errorCode");
 
 		Debug.Log($"[AdvertisingIdAuthProvider] {error_code}");
 
