@@ -11,7 +11,13 @@ public class AdvertisingIdAuthProvider : BindProvider
 	public override string ProviderId { get { return PROVIDER_ID; } }
 
 	public static string AdvertisingId { get; private set; }
-	
+
+	/// <summary>
+	/// Shoud the provider try to use <c>SystemInfo.deviceUniqueIdentifier</c>
+	/// if current platform doesn't support advertising id
+	/// </summary>
+	public static bool DeviceIdFallbackEnabled = false;
+
 	public override void RequestAuth(AuthSuccessCallback success_callback, AuthFailCallback fail_callback, bool reset_auth = false)
 	{
 		mAuthSuccessCallback = success_callback;
@@ -37,9 +43,16 @@ public class AdvertisingIdAuthProvider : BindProvider
 
 		if (!Application.RequestAdvertisingIdentifierAsync(advertising_id_callback))
 		{
-			Debug.Log("[AdvertisingIdAuthProvider] advertising id is not supported on this platform");
+			if (DeviceIdFallbackEnabled && SystemInfo.unsupportedIdentifier != SystemInfo.deviceUniqueIdentifier)
+			{
+				advertising_id_callback(SystemInfo.deviceUniqueIdentifier, false, "");
+			}
+			else
+			{
+				Debug.Log("[AdvertisingIdAuthProvider] advertising id is not supported on this platform");
 
-			InvokeAuthFailCallback(AuthProvider.ERROR_NOT_INITIALIZED);
+				InvokeAuthFailCallback(AuthProvider.ERROR_NOT_INITIALIZED);
+			}
 		}
 	}
 
@@ -61,7 +74,7 @@ public class AdvertisingIdAuthProvider : BindProvider
 
 		void advertising_id_callback(string advertising_id, bool tracking_enabled, string error)
 		{
-			Debug.Log($"[AdvertisingIdAuthProvider] advertising_id : {advertising_id} , error : {error}");
+			Debug.Log($"[AdvertisingIdAuthProvider] advertising_id : {advertising_id} , {error}");
 
 			AdvertisingId = advertising_id;
 
@@ -101,9 +114,16 @@ public class AdvertisingIdAuthProvider : BindProvider
 
 		if (!Application.RequestAdvertisingIdentifierAsync(advertising_id_callback))
 		{
-			Debug.Log("[AdvertisingIdAuthProvider] advertising id is not supported on this platform");
+			if (DeviceIdFallbackEnabled && SystemInfo.unsupportedIdentifier != SystemInfo.deviceUniqueIdentifier)
+			{
+				advertising_id_callback(SystemInfo.deviceUniqueIdentifier, false, "");
+			}
+			else
+			{
+				Debug.Log("[AdvertisingIdAuthProvider] advertising id is not supported on this platform");
 
-			InvokeAuthFailCallback(AuthProvider.ERROR_NOT_INITIALIZED);
+				InvokeAuthFailCallback(AuthProvider.ERROR_NOT_INITIALIZED);
+			}
 		}
 	}
 
@@ -156,6 +176,17 @@ public class AdvertisingIdAuthProvider : BindProvider
 			}
 		}
 
-		return Application.RequestAdvertisingIdentifierAsync(advertising_id_callback);
+		if (!Application.RequestAdvertisingIdentifierAsync(advertising_id_callback))
+		{
+			if (DeviceIdFallbackEnabled && SystemInfo.unsupportedIdentifier != SystemInfo.deviceUniqueIdentifier)
+			{
+				advertising_id_callback(SystemInfo.deviceUniqueIdentifier, false, "");
+				return true;
+			}
+
+			return false;
+		}
+
+		return true;
 	}
 }
