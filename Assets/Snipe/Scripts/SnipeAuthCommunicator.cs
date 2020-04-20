@@ -193,11 +193,11 @@ namespace MiniIT.Snipe
 
 		public static void BindAllProviders(bool force_all = false, BindProvider.BindResultCallback single_bind_callback = null)
 		{
-			if (mInstance?.mAuthProviders != null)
+			if (mInstance != null && mInstance.mAuthProviders != null)
 			{
 				foreach (BindProvider provider in mInstance.mAuthProviders)
 				{
-					if (provider != null && (force_all || !provider.AccountExists))
+					if (provider != null && (force_all || provider.AccountExists == false))
 					{
 						provider.RequestBind(single_bind_callback);
 					}
@@ -207,7 +207,7 @@ namespace MiniIT.Snipe
 
 		private static void ClearAllBindings()
 		{
-			if (mInstance?.mAuthProviders != null)
+			if (mInstance != null && mInstance.mAuthProviders != null)
 			{
 				foreach (BindProvider provider in mInstance.mAuthProviders)
 				{
@@ -400,9 +400,6 @@ namespace MiniIT.Snipe
 				else
 				{
 					InvokeAuthFailCallback();
-
-					mCurrentProvider?.Dispose();
-					mCurrentProvider = null;
 				}
 			}
 			else  // try next provider
@@ -432,6 +429,9 @@ namespace MiniIT.Snipe
 
 			mAuthSucceededCallback = null;
 			mAuthFailedCallback = null;
+
+			mCurrentProvider?.Dispose();
+			mCurrentProvider = null;
 		}
 
 		private void RequestRegister()
