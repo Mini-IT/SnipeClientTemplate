@@ -5,7 +5,7 @@ namespace MiniIT.Snipe
 {
 	public class BindProvider : AuthProvider
 	{
-		public bool AccountExists { get; protected set; } = false;
+		public bool? AccountExists { get; protected set; } = null;
 
 		public delegate void BindResultCallback(BindProvider provider, string error_code);
 		public delegate void CheckAuthExistsCallback(BindProvider provider, bool exists, bool is_me, string user_name = null);
@@ -64,7 +64,9 @@ namespace MiniIT.Snipe
 		{
 			base.OnAuthLoginResponse(data);
 
-			AccountExists = (data?.SafeGetString("errorCode") == ERROR_OK);
+			string error_code = data?.SafeGetString("errorCode");
+			if (!string.IsNullOrEmpty(error_code))
+				AccountExists = (error_code == ERROR_OK);
 		}
 
 		public virtual bool CheckAuthExists(CheckAuthExistsCallback callback = null)
@@ -97,33 +99,39 @@ namespace MiniIT.Snipe
 
 			Debug.Log($"[BindProvider] ({ProviderId}) OnBindResponse - {error_code}");
 
-			AccountExists = (error_code == "ok");
+			if (error_code == "ok")
+				AccountExists = true;
 
 			InvokeBindResultCallback(error_code);
 		}
 
 		protected void OnCheckAuthExistsResponse(ExpandoObject data)
 		{
-			AccountExists = (data.SafeGetString("errorCode") == ERROR_OK);
+			string error_code = data?.SafeGetString("errorCode");
+			if (!string.IsNullOrEmpty(error_code))
+				AccountExists = (error_code == ERROR_OK);
 			
 			bool is_me = data.SafeGetValue("isSame", false);
-			if (AccountExists && is_me)
+			if (AccountExists == true && is_me)
 				IsBindDone = true;
 
 			if (mCheckAuthExistsCallback != null)
 			{
-				mCheckAuthExistsCallback.Invoke(this, AccountExists, is_me, data.SafeGetString("name"));
+				mCheckAuthExistsCallback.Invoke(this, AccountExists == true, is_me, data.SafeGetString("name"));
 				mCheckAuthExistsCallback = null;
 			}
 
-			if (!AccountExists)
+			if (AccountExists.HasValue)
 			{
-				RequestBind();
-			}
-			else if (!is_me)
-			{
-				Debug.Log($"[BindProvider] ({ProviderId}) OnCheckAuthExistsResponse - another account found - InvokeAccountBindingCollisionEvent");
-				SnipeAuthCommunicator.InvokeAccountBindingCollisionEvent(this, data.SafeGetString("name"));
+				if (AccountExists == false)
+				{
+					RequestBind();
+				}
+				else if (!is_me)
+				{
+					Debug.Log($"[BindProvider] ({ProviderId}) OnCheckAuthExistsResponse - another account found - InvokeAccountBindingCollisionEvent");
+					SnipeAuthCommunicator.InvokeAccountBindingCollisionEvent(this, data.SafeGetString("name"));
+				}
 			}
 		}
 
