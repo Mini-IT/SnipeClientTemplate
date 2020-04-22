@@ -100,7 +100,10 @@ namespace MiniIT.Snipe
 			Debug.Log($"[BindProvider] ({ProviderId}) OnBindResponse - {error_code}");
 
 			if (error_code == "ok")
+			{
 				AccountExists = true;
+				IsBindDone = true;
+			}
 
 			InvokeBindResultCallback(error_code);
 		}
