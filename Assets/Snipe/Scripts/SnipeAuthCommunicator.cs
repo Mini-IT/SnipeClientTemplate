@@ -191,6 +191,12 @@ namespace MiniIT.Snipe
 			return false;
 		}
 
+		public static void SwitchToDefaultProvider()
+		{
+			if (mInstance != null)
+				mInstance.SwitchToDefaultAuthProvider();
+		}
+
 		public static void BindAllProviders(bool force_all = false, BindProvider.BindResultCallback single_bind_callback = null)
 		{
 			if (mInstance != null && mInstance.mAuthProviders != null)
