@@ -134,7 +134,7 @@ namespace MiniIT
 			object value;
 			if (this.TryGetValue(key, out value))
 				return Convert.ToString(value);
-			return "";
+			return default_value;
 		}
 		
 		/// 
