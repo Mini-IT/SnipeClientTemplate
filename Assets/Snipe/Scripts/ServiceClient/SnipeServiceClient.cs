@@ -171,7 +171,7 @@ namespace MiniIT.Snipe
 
 			Debug.Log("[SnipeServiceClient] SendRequest - " + message["t"]);
 
-			message["_requestID"] = ++mRequestId;
+			message["id"] = ++mRequestId;
 
 			var bytes = message.EncodeToBytes();
 			lock (mWebSocket)
