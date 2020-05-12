@@ -15,7 +15,7 @@ namespace MiniIT.Snipe
 
 		private const float LOGING_TOKEN_REFRESH_TIMEOUT = 1800.0f; // = 30 min
 
-		public delegate void AccountRegisterRespondedHandler(string error_code);
+		public delegate void AccountRegisterRespondedHandler(string error_code, int user_id = 0);
 		public static event AccountRegisterRespondedHandler AccountRegisterResponded;
 
 		public delegate void AccountBindingCollisionHandler(BindProvider provider, string user_name = null);
@@ -450,6 +450,8 @@ namespace MiniIT.Snipe
 
 			SingleRequestClient.Request(SnipeConfig.Instance.auth, data, (response) =>
 			{
+				int user_id = 0;
+				
 				string error_code = response?.SafeGetString("errorCode");
 				if (error_code == "ok")
 				{
@@ -460,6 +462,8 @@ namespace MiniIT.Snipe
 
 					PlayerPrefs.SetString(SnipePrefs.AUTH_UID, auth_login);
 					PlayerPrefs.SetString(SnipePrefs.AUTH_KEY, auth_token);
+					
+					user_id = response.SafeGetValue<int>("id");
 
 					SwitchToDefaultAuthProvider();
 					mCurrentProvider.RequestAuth(OnCurrentProviderAuthSuccess, OnCurrentProviderAuthFail);
@@ -471,7 +475,7 @@ namespace MiniIT.Snipe
 					InvokeAuthFailCallback();
 				}
 
-				AccountRegisterResponded?.Invoke(error_code);
+				AccountRegisterResponded?.Invoke(error_code, user_id);
 			});
 		}
 
