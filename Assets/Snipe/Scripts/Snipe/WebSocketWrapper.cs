@@ -31,7 +31,7 @@ namespace MiniIT.Snipe
 
 		private ClientWebSocket mWebSocketClient = null;
 		
-		private Queue<string> mWebSocketSendQueue;
+		private Queue<byte[]> mWebSocketSendQueue;
 #endif
 
 		public WebSocketWrapper()
@@ -119,14 +119,14 @@ namespace MiniIT.Snipe
 					continue;
 				}
 				
-				byte[] buffer = UTF8Encoding.UTF8.GetBytes(mWebSocketSendQueue.Dequeue());
+				byte[] buffer = mWebSocketSendQueue.Dequeue();
 				await websocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
 			}
 		}
 
 		protected void OnWebSocketConnected()
 		{
-			mWebSocketSendQueue = new Queue<string>();
+			mWebSocketSendQueue = new Queue<byte[]>();
 			
 			if (OnConnectionOpened != null)
 				OnConnectionOpened();
@@ -172,6 +172,15 @@ namespace MiniIT.Snipe
 		}
 
 		public void SendRequest(string message)
+		{
+			if (mWebSocketSendQueue != null)
+			{
+				byte[] buffer = UTF8Encoding.UTF8.GetBytes(message);
+				mWebSocketSendQueue.Enqueue(buffer);
+			}
+		}
+
+		public void SendRequest(byte[] message)
 		{
 			if (mWebSocketSendQueue != null)
 			{
