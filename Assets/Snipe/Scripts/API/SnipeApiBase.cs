@@ -21,5 +21,15 @@ namespace MiniIT.Snipe
 			request.Data = data;
 			return request;
 		}
+
+		internal SnipeServiceRequest CreateServiceRequest(ExpandoObject data)
+		{
+			if (Communicator == null || Communicator.ServiceCommunicator == null || !Communicator.ServiceCommunicator.Ready)
+				return null;
+
+			var request = Communicator.ServiceCommunicator.CreateRequest();
+			request.Data = data;
+			return request;
+		}
 	}
 }

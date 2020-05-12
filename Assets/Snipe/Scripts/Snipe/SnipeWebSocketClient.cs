@@ -93,7 +93,7 @@ namespace MiniIT.Snipe
 		}
 
 		// Process WebSocket Message
-		protected void ProcessData(byte[] raw_data_buffer, int data_length = -1)
+		protected void ProcessData(byte[] raw_data_buffer)
 		{
 			if (raw_data_buffer != null && raw_data_buffer.Length > 0)
 			{
@@ -103,14 +103,9 @@ namespace MiniIT.Snipe
 					
 					try
 					{
-						if (data_length < 1)
-						{
-							data_length = Convert.ToInt32(buf_stream.Length);
-						}
-						
 						// the 1st byte contains compression flag (0/1)
 						mCompressed = (buf_stream.ReadByte() == 1);
-						mMessageLength = data_length - 1;
+						mMessageLength = Convert.ToInt32(buf_stream.Length) - 1;
 
 						if (mCompressed)
 						{

@@ -13,10 +13,6 @@ using MiniIT;
 // http://snipeserver.com
 // https://github.com/Mini-IT/SnipeWiki/wiki
 
-
-// Docs on how to use TCP Client:
-// http://sunildube.blogspot.ru/2011/12/asynchronous-tcp-client-easy-example.html
-
 namespace MiniIT.Snipe
 {
 	internal abstract class SnipeAbstractClient : IDisposable
@@ -28,7 +24,6 @@ namespace MiniIT.Snipe
 		internal Action OnConnectionSucceeded;
 		internal Action OnConnectionFailed;
 		internal Action OnConnectionLost;
-		//internal Action OnErrorHappened;
 		internal Action<ExpandoObject> OnMessageReceived;
 		
 		protected bool mConnected = false;
@@ -83,7 +78,6 @@ namespace MiniIT.Snipe
 			this.OnConnectionSucceeded = null;
 			this.OnConnectionFailed = null;
 			this.OnConnectionLost = null;
-			//this.OnErrorHappened = null;
 			this.OnMessageReceived = null;
 			
 			Disconnect();

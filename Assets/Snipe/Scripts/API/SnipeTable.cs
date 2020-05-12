@@ -11,7 +11,7 @@ namespace MiniIT.Snipe
 {
 	public class SnipeTable
 	{
-		public static string Path;
+		//public static string Path;
 
 		private const int MAX_LOADERS_COUNT = 5;
 		private static int mLoadersCount = 0;
@@ -28,7 +28,7 @@ namespace MiniIT.Snipe
 				yield return 0;
 			mLoadersCount++;
 
-			string url = string.Format("{0}/{1}.json.gz", Path, table_name);
+			string url = string.Format("{0}/{1}.json.gz", SnipeConfig.Instance.GetTablesPath(), table_name);
 			UnityEngine.Debug.Log("[SnipeTable] Loading table " + url);
 
 			this.LoadingFailed = false;

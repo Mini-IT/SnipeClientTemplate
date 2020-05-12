@@ -238,6 +238,8 @@ namespace MiniIT.Snipe
 
 		public void Connect()
 		{
+			Debug.Log($"[SnipeClient] Connect - {mConnectionHost} : {mConnectionPort} ws: {mConnectionWebSocketURL}");
+
 			if (!string.IsNullOrEmpty(mConnectionHost) && mConnectionPort > 0)
 			{
 				ConnectTCP();

@@ -70,7 +70,7 @@ namespace MiniIT.Snipe
 				if (reply != null && reply.Length > 0)
 				{
 					if (ProcessMessage != null)
-						ProcessMessage(reply, reply.Length);
+						ProcessMessage(reply);
 				}
 
 				string error = WebSocketError;
@@ -161,6 +161,11 @@ namespace MiniIT.Snipe
 		public void SendRequest(byte[] buffer)
 		{
 			SocketSend(mWebSocketNativeRef, buffer, buffer.Length);
+		}
+
+		public void Ping()
+		{
+			// TODO
 		}
 		
 		public bool Connected

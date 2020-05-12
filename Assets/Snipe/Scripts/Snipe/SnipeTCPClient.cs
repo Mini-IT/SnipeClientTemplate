@@ -33,6 +33,8 @@ namespace MiniIT.Snipe
 		{
 			Disconnect();
 
+			Debug.Log($"[SnipeTCPClient] Connect to {host}:{port}");
+
 			bool connected;
 
 			try

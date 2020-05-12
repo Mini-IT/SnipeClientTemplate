@@ -17,8 +17,6 @@ namespace MiniIT.Snipe
 
 		public virtual string ProviderId { get { return "__"; } }
 
-		//public bool LoggedIn { get; protected set; } = false;
-
 		public delegate void AuthSuccessCallback(int user_id, string login_token);
 		public delegate void AuthFailCallback(string login_code);
 
@@ -52,8 +50,6 @@ namespace MiniIT.Snipe
 			};
 			if (reset_auth)
 				data["resetInternalAuth"] = reset_auth;
-
-			//LoggedIn = false;
 
 			SingleRequestClient.Request(SnipeConfig.Instance.auth, data, OnAuthLoginResponse);
 		}

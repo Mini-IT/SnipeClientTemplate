@@ -17,6 +17,7 @@ namespace MiniIT.Snipe
 		public string LoginName { get; private set; }
 
 		protected SnipeClient Client { get; set; }
+		public SnipeServiceCommunicator ServiceCommunicator { get; private set; }
 
 		protected bool mDebugEnabled = false;
 		public bool DebugEnabled
@@ -50,7 +51,12 @@ namespace MiniIT.Snipe
 		public virtual void StartCommunicator()
 		{
 			DontDestroyOnLoad(this.gameObject);
-			
+
+			if (ServiceCommunicator == null)
+				ServiceCommunicator = this.gameObject.AddComponent<SnipeServiceCommunicator>();
+			else
+				ServiceCommunicator.DisposeClient();
+
 			if (CheckLoginParams())
 			{
 				InitClient();
@@ -237,6 +243,9 @@ namespace MiniIT.Snipe
 
 		protected void RequestLogin()
 		{
+			if (ServiceCommunicator != null)
+				ServiceCommunicator.DisposeClient();
+
 			ExpandoObject data = new ExpandoObject();
 			data["id"] = SnipeAuthCommunicator.UserID;
 			data["token"] = SnipeAuthCommunicator.LoginToken;

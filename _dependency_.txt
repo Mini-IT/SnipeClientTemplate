@@ -11,3 +11,5 @@ download link:  https://origincache.facebook.com/developers/resources/?id=Facebo
 Third-party libraries used
 - Ionic.Zlib
 - WebSocket.jslib
+- websocket-sharp https://github.com/sta/websocket-sharp
+- MPack https://github.com/caesay/MPack
