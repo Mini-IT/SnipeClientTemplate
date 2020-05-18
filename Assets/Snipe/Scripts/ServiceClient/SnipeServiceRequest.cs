@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using MiniIT;
 
 namespace MiniIT.Snipe
@@ -7,12 +8,17 @@ namespace MiniIT.Snipe
 	{
 		public const string ERROR_NOT_READY = "notReady";
 		public const string ERROR_INVALIND_DATA = "invalidData";
+		public const string ERROR_SERVCIE_OFFLINE = "serviceOffline";
+
+		private const int RETRIES_COUNT = 3;
+		private const int RETRY_DELAY = 1000; // milliseconds
 
 		protected SnipeServiceCommunicator mCommunicator;
 		protected Action<ExpandoObject> mCallback;
 		protected string mMessageType;
 
 		protected int mRequestId;
+		protected int mRetriesLeft = RETRIES_COUNT;
 
 		public ExpandoObject Data { get; set; }
 
@@ -51,6 +57,7 @@ namespace MiniIT.Snipe
 			if (mCallback != null)
 			{
 				//mCommunicator.ConnectionLost += OnConnectionLost;
+				mCommunicator.MessageReceived -= OnMessageReceived;
 				mCommunicator.MessageReceived += OnMessageReceived;
 			}
 			mRequestId = mCommunicator.Client.SendRequest(mMessageType, Data);
@@ -66,6 +73,18 @@ namespace MiniIT.Snipe
 		{
 			if (CheckResponse(response_data))
 			{
+				if (response_data.SafeGetString("errorCode") == ERROR_SERVCIE_OFFLINE && mRetriesLeft > 0)
+				{
+					mRetriesLeft--;
+
+					Task.Delay(RETRY_DELAY).ContinueWith((task) =>
+					{
+						Request(mCallback);
+					});
+
+					return;
+				}
+
 				if (mCallback != null)
 					mCallback.Invoke(response_data);
 
