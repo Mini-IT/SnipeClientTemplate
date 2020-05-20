@@ -43,6 +43,9 @@ namespace MiniIT.Snipe
 				mClient = new SnipeServiceClient();
 				mClient.LoginSucceeded += OnLoginSucceeded;
 				mClient.LoginFailed += OnLoginFailed;
+			}
+			if (!mClient.Connected)
+			{
 				mClient.Connect();
 			}
 		}
