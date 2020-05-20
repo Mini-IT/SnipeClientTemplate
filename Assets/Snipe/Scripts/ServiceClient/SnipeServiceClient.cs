@@ -271,10 +271,10 @@ namespace MiniIT.Snipe
 
 			ResetHeartbeatTimer();
 
+			await Task.Delay(5000, cancellation);
+
 			while (!cancellation.IsCancellationRequested && Connected)
 			{
-				await Task.Delay(5000, cancellation);
-
 				if (DateTime.Now.Ticks >= mHeartbeatTriggerTicks)
 				{
 					lock (mWebSocket)
@@ -287,6 +287,8 @@ namespace MiniIT.Snipe
 					Debug.Log("[SnipeServiceClient] Heartbeat ping");
 					//#endif
 				}
+
+				await Task.Delay(5000, cancellation);
 			}
 		}
 

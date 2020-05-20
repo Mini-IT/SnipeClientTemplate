@@ -1,13 +1,10 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
 using UnityEngine;
-using Ionic.Zlib;
 using MiniIT;
+
+using System.Threading;
+using System.Threading.Tasks;
 
 //
 // Client to Snipe server
@@ -22,8 +19,8 @@ namespace MiniIT.Snipe
 {
 	public class SnipeClient : MonoBehaviour, IDisposable
 	{
-		private const float HEARTBEAT_INTERVAL = 30.0f; // seconds
-		private const float CHECK_CONNECTION_TIMEOUT = 3.0f; // seconds
+		private const double HEARTBEAT_INTERVAL = 30;      // seconds
+		private const int CHECK_CONNECTION_TIMEOUT = 3000; // milliseconds
 
 		private string mClientKey;
 		public string ClientKey
@@ -65,13 +62,6 @@ namespace MiniIT.Snipe
 		private string mConnectionHost;
 		private int mConnectionPort;
 		private string mConnectionWebSocketURL;
-
-		private float mHeartbeatTriggerTime = 0.0f;
-		private float mCheckConnectionTriggerTime = 0.0f;
-
-		private float mRealtimeSinceStartup;  // local variable for thread safety
-		private bool mApplicationFocusLost = false;
-		private bool mApplicationFocusGained = true;
 
 		private int mRequestId = 0;
 
@@ -135,11 +125,6 @@ namespace MiniIT.Snipe
 		{
 		}
 
-		private void Awake()
-		{
-			mRealtimeSinceStartup = Time.realtimeSinceStartup;
-		}
-		
 		public void Init(string tcp_host, int tcp_port, string web_socket_url = "")
 		{
 			mConnectionHost = tcp_host;
@@ -171,8 +156,6 @@ namespace MiniIT.Snipe
 
 		void Update()
 		{
-			mRealtimeSinceStartup = Time.realtimeSinceStartup;
-
 			while (mDispatchEventQueue != null && mDispatchEventQueue.Count > 0)
 			{
 				QueuedEvent item = mDispatchEventQueue.Dequeue();
@@ -185,55 +168,6 @@ namespace MiniIT.Snipe
 				if (!ClientIsValid)
 					return;
 			}
-
-			if (!mApplicationFocusLost && mConnected && mCheckConnectionTriggerTime > 0.0f && mRealtimeSinceStartup >= mCheckConnectionTriggerTime)
-			{
-				// Disconnect detected
-				if (DebugEnabled)
-//#if DEBUG
-					Debug.Log("[SnipeClient] Update - Disconnect detected");
-//#endif
-				mConnected = false;
-				DisconnectReason = "Update - Disconnect detected";
-				DisconnectAndDispatch(ConnectionLost);
-			}
-
-			if (mConnected)
-			{
-				if (mApplicationFocusLost && mApplicationFocusGained)
-				{
-					mApplicationFocusLost = false;
-
-					if (mHeartbeatEnabled)
-					{
-						ResetHeartbeatTime(true);
-						ResetCheckConnectionTime();
-						SendPingRequest();
-					}
-				}
-				else if (mHeartbeatTriggerTime > 0.0f && mRealtimeSinceStartup >= mHeartbeatTriggerTime)
-				{
-					ResetHeartbeatTime();
-					if (mHeartbeatEnabled)
-					{
-						ResetCheckConnectionTime();
-						SendPingRequest();
-					}
-				}
-			}
-		}
-
-		private void ResetHeartbeatTime(bool force = false)
-		{
-			if (mConnected || force)
-			{
-				mHeartbeatTriggerTime =  mRealtimeSinceStartup + HEARTBEAT_INTERVAL;
-			}
-		}
-
-		private void ResetCheckConnectionTime()
-		{
-			mCheckConnectionTriggerTime = mRealtimeSinceStartup + CHECK_CONNECTION_TIMEOUT;
 		}
 
 		public void Connect()
@@ -263,26 +197,6 @@ namespace MiniIT.Snipe
 			mTCPClient.Connect(mConnectionHost, mConnectionPort);
 		}
 		
-		/*
-		public void ConnectWebSocket(string host, int port = 80)
-		{
-			string url = host.ToLower();
-			if (!url.StartsWith("ws://") || !url.StartsWith("wss://"))
-			{
-				url = url.Replace("http://", "ws://").Replace("https://", "wss://");
-				if (!url.StartsWith("ws://") || !url.StartsWith("wss://"))
-					url = "ws://" + url;
-			}
-			if (url.EndsWith("/"))
-				url = url.Substring(0, url.Length - 1);
-
-			if (port > 0 && port != 80)
-				url += ":" + port.ToString() + "/";
-
-			ConnectWebSocket(url);
-		}
-		*/
-
 		public void ConnectWebSocket()
 		{
 			ConnectionId = "";
@@ -310,8 +224,7 @@ namespace MiniIT.Snipe
 			mClientKeySent = false;
 			mLoggedIn = false;
 
-			mCheckConnectionTriggerTime = 0.0f;
-			mHeartbeatTriggerTime = 0.0f;
+			StopCheckConnection();
 
 			DispatchEvent(ConnectionSucceeded);
 		}
@@ -346,20 +259,16 @@ namespace MiniIT.Snipe
 		
 		private void OnMessageReceived(ExpandoObject data)
 		{
-			// reset check connection
-			mCheckConnectionTriggerTime = 0.0f;
+			StopCheckConnection();
 
 			if (!mLoggedIn && data != null && data.SafeGetString("type") == "user.login" && data.SafeGetString("errorCode") == "ok")
 			{
 				mLoggedIn = true;
-				ResetHeartbeatTime();
+				StartHeartbeat();
 			}
 
 			if (data != null && data.ContainsKey("_connectionID"))
 				ConnectionId = data.SafeGetString("_connectionID");
-
-			//if (DebugEnabled)
-			//Debug.Log(DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + " [SnipeClient] OnMessageReceived: " + data?.ToJSONString());
 
 			DispatchEvent(MessageReceived, data);
 		}
@@ -376,8 +285,8 @@ namespace MiniIT.Snipe
 			mClientKeySent = false;
 			mLoggedIn = false;
 
-			mCheckConnectionTriggerTime = 0.0f;
-			ResetHeartbeatTime();
+			StopCheckConnection();
+			ResetHeartbeatTimer();
 
 			DispatchEvent(ConnectionSucceeded);
 		}
@@ -426,8 +335,8 @@ namespace MiniIT.Snipe
 			mConnected = false;
 			mLoggedIn = false;
 			
-			mHeartbeatTriggerTime = 0.0f;
-			mCheckConnectionTriggerTime = 0.0f;
+			StopHeartbeat();
+			StopCheckConnection();
 
 			if (event_to_dispatch != null)
 				DispatchEvent(event_to_dispatch);
@@ -474,17 +383,23 @@ namespace MiniIT.Snipe
 						parameters["appInfo"] = mAppInfo;
 				}
 
-				ResetHeartbeatTime();
+				ResetHeartbeatTimer();
 
 				if (mTCPClient != null)
 				{
-					string message = HaxeSerializer.Run(parameters);
-					mTCPClient.SendRequest(message);
+					lock (mTCPClient)
+					{
+						string message = HaxeSerializer.Run(parameters);
+						mTCPClient.SendRequest(message);
+					}
 				}
 				else if (mWebSocketClient != null)
 				{
-					string message = HaxeSerializer.Run(parameters);
-					mWebSocketClient.SendRequest(message);
+					lock (mWebSocketClient)
+					{
+						string message = HaxeSerializer.Run(parameters);
+						mWebSocketClient.SendRequest(message);
+					}
 				}
 			}
 			else
@@ -500,10 +415,6 @@ namespace MiniIT.Snipe
 			if (mLoggedIn)
 			{
 				SendRequest("kit/user.ping");
-			}
-			else
-			{
-				ResetHeartbeatTime();
 			}
 		}
 
@@ -572,17 +483,104 @@ namespace MiniIT.Snipe
 
 			if (focus)
 			{
-				mApplicationFocusGained = true;
+				StartCheckConnection();
 			}
 			else
 			{
-				mApplicationFocusGained = false;
-				mApplicationFocusLost = true;
-
-				// cancel connection checking
-				mCheckConnectionTriggerTime = 0.0f;
+				StopCheckConnection();
 			}
 		}
+
+		#region Heartbeat and CheckConnection
+
+		private long mHeartbeatTriggerTicks = 0;
+
+		private CancellationTokenSource mHeartbeatCancellation;
+		private CancellationTokenSource mCheckConnectionCancellation;
+
+		private void StartHeartbeat()
+		{
+			mHeartbeatCancellation?.Cancel();
+
+			mHeartbeatCancellation = new CancellationTokenSource();
+			_ = HeartbeatTask(mHeartbeatCancellation.Token);
+		}
+
+		private void StopHeartbeat()
+		{
+			if (mHeartbeatCancellation != null)
+			{
+				mHeartbeatCancellation.Cancel();
+				mHeartbeatCancellation = null;
+			}
+		}
+
+		private async Task HeartbeatTask(CancellationToken cancellation)
+		{
+			ResetHeartbeatTimer();
+
+			await Task.Delay(5000, cancellation);
+
+			while (!cancellation.IsCancellationRequested && Connected)
+			{
+				if (DateTime.Now.Ticks >= mHeartbeatTriggerTicks)
+				{
+					SendPingRequest();
+					ResetHeartbeatTimer();
+
+					Debug.Log("[SnipeClient] Heartbeat ping");
+				}
+
+				await Task.Delay(5000, cancellation);
+			}
+		}
+
+		private void ResetHeartbeatTimer()
+		{
+			mHeartbeatTriggerTicks = DateTime.Now.AddSeconds(HEARTBEAT_INTERVAL).Ticks;
+		}
+
+		private void StartCheckConnection()
+		{
+			if (DebugEnabled)
+				Debug.Log("[SnipeClient] StartCheckConnection");
+
+			mCheckConnectionCancellation?.Cancel();
+
+			mCheckConnectionCancellation = new CancellationTokenSource();
+			_ = CheckConnectionTask(mCheckConnectionCancellation.Token);
+		}
+
+		private void StopCheckConnection()
+		{
+			if (mCheckConnectionCancellation != null)
+			{
+				mCheckConnectionCancellation.Cancel();
+				mCheckConnectionCancellation = null;
+
+				if (DebugEnabled)
+					Debug.Log("[SnipeClient] StopCheckConnection");
+			}
+		}
+
+		private async Task CheckConnectionTask(CancellationToken cancellation)
+		{
+			SendPingRequest();
+
+			await Task.Delay(CHECK_CONNECTION_TIMEOUT, cancellation);
+
+			// if the connection is ok then this task should already be cancelled
+
+			// Disconnect detected
+			if (DebugEnabled)
+				Debug.Log("[SnipeClient] CheckConnectionTask - Disconnect detected");
+
+			mConnected = false;
+			DisconnectReason = "CheckConnectionTask - Disconnect detected";
+			DisconnectAndDispatch(ConnectionLost);
+		}
+
+		#endregion
 	}
 
 }
