@@ -545,6 +545,14 @@ namespace MiniIT.Snipe
 			if (DebugEnabled)
 				Debug.Log("[SnipeClient] StartCheckConnection");
 
+			if (!mLoggedIn)
+			{
+				if (DebugEnabled)
+					Debug.Log("[SnipeClient] Not logged in yet");
+
+				return;
+			}
+
 			mCheckConnectionCancellation?.Cancel();
 
 			mCheckConnectionCancellation = new CancellationTokenSource();
