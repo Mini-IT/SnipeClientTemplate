@@ -19,6 +19,9 @@ namespace MiniIT.Snipe
 		protected SnipeClient Client { get; set; }
 		public SnipeServiceCommunicator ServiceCommunicator { get; private set; }
 
+		public int RestoreConnectionAttempts = 3;
+		private int mRestoreConnectionAttempt;
+
 		protected bool mDebugEnabled = false;
 		public bool DebugEnabled
 		{
@@ -47,6 +50,8 @@ namespace MiniIT.Snipe
 		{
 			get { return Client != null && Client.LoggedIn; }
 		}
+
+		private bool mDisconnecting = false;
 
 		public virtual void StartCommunicator()
 		{
@@ -121,6 +126,9 @@ namespace MiniIT.Snipe
 				Client.ConnectionLost += OnConnectionFailed;
 				Client.DebugEnabled = this.DebugEnabled;
 			}
+
+			mDisconnecting = false;
+
 			if (Client.Connected)
 				RequestLogin();
 			else
@@ -139,6 +147,7 @@ namespace MiniIT.Snipe
 		{
 			Debug.Log($"[SnipeCommunicator] {this.name} Disconnect");
 
+			mDisconnecting = true;
 			LoginName = "";
 
 			if (Client != null)
@@ -164,6 +173,9 @@ namespace MiniIT.Snipe
 		{
 			Debug.Log($"[SnipeCommunicator] {this.name} Connection succeeded");
 
+			mRestoreConnectionAttempt = 0;
+			mDisconnecting = false;
+
 			if (ConnectionSucceeded != null)
 				ConnectionSucceeded.Invoke();
 
@@ -179,8 +191,17 @@ namespace MiniIT.Snipe
 			if (Client != null)
 				Client.MessageReceived -= OnSnipeResponse;
 
-			if (ConnectionFailed != null)
-				ConnectionFailed.Invoke();
+			if (mRestoreConnectionAttempt < RestoreConnectionAttempts && !mDisconnecting)
+			{
+				mRestoreConnectionAttempt++;
+				Debug.Log($"[SnipeCommunicator] Attempt to restore connection {mRestoreConnectionAttempt}");
+				StartCoroutine(WaitAndInitClient());
+			}
+			else
+			{
+				if (ConnectionFailed != null)
+					ConnectionFailed.Invoke();
+			}
 		}
 
 		private void OnSnipeResponse(ExpandoObject data)
@@ -233,6 +254,12 @@ namespace MiniIT.Snipe
 			}
 
 			MessageReceived?.Invoke(data, original);
+		}
+
+		private IEnumerator WaitAndInitClient()
+		{
+			yield return new WaitForSeconds(0.5f);
+			InitClient();
 		}
 
 		private IEnumerator WaitAndRequestLogin()
