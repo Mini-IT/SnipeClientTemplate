@@ -13,8 +13,6 @@ public class RoomModule : ServerModule
 	public bool Active { get; set; }
 
 	protected bool mMatchmaking = false;
-	protected string mRoomType;
-	internal int mRoomID;
 	protected RoomCommunicator mRoomClient;
 
 	public RoomModule(Server server) : base(server)
@@ -81,8 +79,6 @@ public class RoomModule : ServerModule
 		{
 			mMatchmaking = false;
 			
-			mRoomID = data.SafeGetValue<int>("roomID");
-
 			if (RoomUsersData == null)
 				RoomUsersData = new Dictionary<int, ExpandoObject>();
 			else
@@ -100,11 +96,12 @@ public class RoomModule : ServerModule
 				}
 			}
 			
-			mRoomClient = new GameObject("SnipeRoom").AddComponent<RoomCommunicator>();
-			mRoomClient.mServer = mServer;
-			mRoomClient.mHost = data.SafeGetString("host");
-			mRoomClient.mPort = data.SafeGetValue<int>("port");
-			mRoomClient.mWebSocketUrl = data.SafeGetString("webSocket");
+			mRoomClient = SnipeRoomCommunicator.Create<RoomCommunicator>(RoomCommunicator.ROOM_TYPE,
+				data.SafeGetValue<int>("roomID"),
+				mServer,
+				data.SafeGetString("host"),
+				data.SafeGetValue<int>("port"),
+				data.SafeGetString("webSocket"));
 			mRoomClient.StartCommunicator();
 		}
 	}

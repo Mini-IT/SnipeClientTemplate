@@ -6,58 +6,27 @@ using UnityEngine;
 using MiniIT;
 using MiniIT.Snipe;
 
-public partial class RoomCommunicator : SnipeCommunicator
+public partial class RoomCommunicator : SnipeRoomCommunicator
 {
 	public const string ROOM_TYPE = "race";
 	
-	internal Server mServer;
-	internal string mHost;
-	internal int mPort;
-	internal string mWebSocketUrl;
-
-	protected override void InitClient()
+	private Server mServer;
+	
+	public override void StartCommunicator()
 	{
-		InitClient(mHost, mPort, mWebSocketUrl);
+		mServer = mGameCommunicator as Server;
+		base.StartCommunicator();
 	}
 
 	protected override void ProcessSnipeMessage(ExpandoObject data, bool original = false)
 	{
 		base.ProcessSnipeMessage(data, original);
 
-		#if UNITY_EDITOR
-		Debug.Log("[RoomCommunicator] OnRoomResponse: " + (data != null ? data.ToJSONString() : "null"));
-#endif
-
 		string message_type = data.SafeGetString("type");
 		string error_code = data.SafeGetString("errorCode");
 
 		switch(message_type)
 		{
-			case "user.login":
-				if (error_code == "ok")
-				{
-					OnLogin(data);
-				}
-				//else if (data.errorCode == "userAlreadyLogin")
-				break;
-					
-			case "kit/room.join":
-				OnRoomJoin(data);
-				break;
-				
-			case "kit/room.leave":
-			case "kit/user.logout":
-				OnRoomLeave(data);
-				break;
-
-			case "kit/room.left":
-				OnRoomLeft(data);
-				break;
-
-			case "kit/room.dead":
-				OnRoomDead(data);
-				break;
-
 			case "race.prestart":
 				OnRacePrestart(data);
 				break;
@@ -69,24 +38,10 @@ public partial class RoomCommunicator : SnipeCommunicator
 			case "race.finish":
 				OnRoomRaceFinish(data);
 				break;
-
-			case "kit/room.broadcast":
-				OnRoomBroadcast(data);
-				break;
 		}
 	}
 	
-	protected virtual void OnLogin(ExpandoObject data)
-	{
-		// join room
-		Request("kit/room.join", new ExpandoObject()
-		{
-			["typeID"] = ROOM_TYPE,
-			["roomID"] = mServer.Race.mRoomID,
-		});
-	}
-	
-	private void OnRoomJoin(ExpandoObject data)
+	protected override void OnRoomJoin(ExpandoObject data)
 	{
 		string error_code = data.SafeGetString("errorCode");
 		
@@ -97,36 +52,42 @@ public partial class RoomCommunicator : SnipeCommunicator
 
 			//mServer.DispatchEvent(mServer.RaceJoined);
 		}
-	}
-	
-	private void OnRoomLeave(ExpandoObject data)
-	{
-		Dispose();
+
+		base.OnRoomJoin(data);
 	}
 
-	private void OnRoomLeft(ExpandoObject data)
+	protected override void OnRoomLeft(ExpandoObject data)
 	{
 		// opponent disconnected
+
+		//mServer.DispatchEvent(mServer.RaceOpponentLeft);
+
+		//OnRoomDead(data);
+
+		base.OnRoomLeft(data);
 	}
 
-	private void OnRoomDead(ExpandoObject data)
+	protected override void OnRoomDead(ExpandoObject data)
 	{
 		// kit/room.dead идет при любой смерти комнаты, в том числе и когда гонка завершилась корректно
 
 		//if (mServer.Race.Joined)
 		//	mServer.DispatchEvent(mServer.RaceRoomDead);
 
-		Dispose();
+		base.OnRoomDead(data);
 	}
 
 	private void OnRacePrestart(ExpandoObject data)
 	{
-		
+		//RaceState.RaceReady = true;
+		//mServer.DispatchEvent(mServer.RacePrestart);
 	}
 
 	private void OnRaceGo(ExpandoObject data)
 	{
-		
+		//mServer.Pers.PlayerData.Energy--;
+
+		//mServer.DispatchEvent(mServer.RaceStarted);
 	}
 
 	private void OnRoomRaceFinish(ExpandoObject data)
@@ -135,22 +96,13 @@ public partial class RoomCommunicator : SnipeCommunicator
 		mServer.Race.Joined = false; // чтобы  kit/room.dead не привел к отображению ошибки
 	}
 
-	private void OnRoomBroadcast(ExpandoObject data)
+	protected override void OnRoomBroadcast(string error_code, ExpandoObject msg)
 	{
-		string error_code = data.SafeGetString("errorCode");
-		
-		if (error_code == "ok" && data.ContainsKey("msg"))
-		{
-			ExpandoObject message_data = ExpandoObject.FromJSONString(data["msg"] as string);
+		base.OnRoomBroadcast(error_code, msg);
 
-			if ((int)message_data["id"] != mServer.Player.PlayerData.Id)
-			{
-				ProcessRoomBroadcastMessage(message_data);
-			}
+		if (msg != null)
+		{
+			// processing broadcast message
 		}
-	}
-	
-	protected virtual void ProcessRoomBroadcastMessage(ExpandoObject message_data)
-	{
 	}
 }
