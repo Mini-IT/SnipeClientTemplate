@@ -17,10 +17,6 @@ namespace MiniIT.Snipe
 
 		public static void Request(SnipeServerConfig config, ExpandoObject request, Action<ExpandoObject> callback)
 		{
-			// ????
-			//if (mClient != null)
-			//	DisposeClient();
-
 			SnipeClient client = SnipeClient.CreateInstance(SnipeConfig.Instance.snipe_client_key, "SnipeSingleRequestClient", false);
 			client.AppInfo = SnipeConfig.Instance.snipe_app_info;
 			SingleRequestClient instance = client.gameObject.AddComponent<SingleRequestClient>();
@@ -54,7 +50,7 @@ namespace MiniIT.Snipe
 
 			mClient.MessageReceived -= OnResponse;
 
-			InvokeCallback(null);
+			InvokeCallback(new ExpandoObject() { ["errorCode"] = "connectionFailed" });
 			DisposeClient();
 		}
 

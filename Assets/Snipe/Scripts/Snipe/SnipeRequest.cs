@@ -11,16 +11,16 @@ namespace MiniIT.Snipe
 
 		protected SnipeClient mClient;
 		protected Action<ExpandoObject> mCallback;
-		protected string mMessageType;
+
+		public string MessageType { get; protected set; }
+		public ExpandoObject Data { get; set; }
 
 		protected int mRequestId;
-
-		public ExpandoObject Data { get; set; }
 
 		public SnipeRequest(SnipeClient client, string message_type = null)
 		{
 			mClient = client;
-			mMessageType = message_type;
+			MessageType = message_type;
 		}
 
 		public void Request(ExpandoObject data, Action<ExpandoObject> callback = null)
@@ -45,23 +45,43 @@ namespace MiniIT.Snipe
 				return;
 			}
 
-			if (string.IsNullOrEmpty(mMessageType))
-				mMessageType = Data?.SafeGetString("messageType");
+			if (string.IsNullOrEmpty(MessageType))
+				MessageType = Data?.SafeGetString("messageType");
 
-			if (string.IsNullOrEmpty(mMessageType))
+			if (!CheckMessageType())
 			{
 				if (callback != null)
 					callback.Invoke(new ExpandoObject() { { "errorCode", ERROR_INVALIND_DATA } });
 				return;
 			}
 
+			SetCallback(callback);
+			SendRequest();
+		}
+
+		protected bool CheckMessageType()
+		{
+			if (string.IsNullOrEmpty(MessageType))
+				MessageType = Data?.SafeGetString("messageType");
+
+			return !string.IsNullOrEmpty(MessageType);
+		}
+
+		protected virtual void SetCallback(Action<ExpandoObject> callback)
+		{
 			mCallback = callback;
-			if (mCallback != null)
+			if (mCallback != null && mClient != null)
 			{
+				mClient.ConnectionLost -= OnConnectionLost;
+				mClient.MessageReceived -= OnMessageReceived;
 				mClient.ConnectionLost += OnConnectionLost;
 				mClient.MessageReceived += OnMessageReceived;
 			}
-			mRequestId = mClient.SendRequest(mMessageType, Data);
+		}
+
+		protected virtual void SendRequest()
+		{
+			mRequestId = mClient.SendRequest(MessageType, Data);
 		}
 
 		private void OnConnectionLost(ExpandoObject data)
@@ -83,10 +103,10 @@ namespace MiniIT.Snipe
 
 		protected virtual bool CheckResponse(ExpandoObject response_data)
 		{
-			return (response_data.SafeGetValue<int>("_requestID") == mRequestId && response_data.SafeGetString("type") == mMessageType);
+			return (response_data.SafeGetValue<int>("_requestID") == mRequestId && response_data.SafeGetString("type") == MessageType);
 		}
 
-		public void Dispose()
+		public virtual void Dispose()
 		{
 			if (mClient != null)
 			{

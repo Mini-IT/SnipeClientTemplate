@@ -13,10 +13,11 @@ namespace MiniIT.Snipe
 		public event Action ConnectionFailed;
 		public event Action LoginSucceeded;
 		public event MessageReceivedHandler MessageReceived;
+		public event Action PreDestroy;
 
 		public string LoginName { get; private set; }
 
-		protected SnipeClient Client { get; set; }
+		internal SnipeClient Client { get; set; }
 		public SnipeServiceCommunicator ServiceCommunicator { get; private set; }
 
 		public int RestoreConnectionAttempts = 3;
@@ -51,7 +52,7 @@ namespace MiniIT.Snipe
 			get { return Client != null && Client.LoggedIn; }
 		}
 
-		private bool mDisconnecting = false;
+		protected bool mDisconnecting = false;
 
 		public virtual void StartCommunicator()
 		{
@@ -158,6 +159,12 @@ namespace MiniIT.Snipe
 		{
 			Debug.Log("[SnipeCommunicator] OnDestroy");
 
+			try
+			{
+				PreDestroy?.Invoke();
+			}
+			catch (Exception) { }
+
 			if (Client != null)
 			{
 				Client.ConnectionSucceeded -= OnConnectionSucceeded;
@@ -227,6 +234,13 @@ namespace MiniIT.Snipe
 			string message_type = data.SafeGetString("type");
 			string error_code = data.SafeGetString("errorCode");
 
+#if UNITY_EDITOR
+			if (!string.IsNullOrEmpty(error_code) && error_code != "ok")
+			{
+				Debug.LogError("[SnipeCommunicator] errorCode = " + error_code);
+			}
+#endif
+
 			switch (message_type)
 			{
 				case "user.login":
@@ -295,9 +309,17 @@ namespace MiniIT.Snipe
 			// else add to queue???
 		}
 
-		public SnipeRequest CreateRequest(string message_type = null, ExpandoObject parameters = null)
+		internal int Request(SnipeCommunicatorRequest request)
 		{
-			SnipeRequest request = new SnipeRequest(this.Client, message_type);
+			if (Client == null || request == null || !Client.LoggedIn)
+				return 0;
+
+			return Client.SendRequest(request.MessageType, request.Data);
+		}
+
+		public SnipeCommunicatorRequest CreateRequest(string message_type = null, ExpandoObject parameters = null)
+		{
+			var request = new SnipeCommunicatorRequest(this, message_type);
 			request.Data = parameters;
 			return request;
 		}

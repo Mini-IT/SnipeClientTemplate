@@ -451,7 +451,7 @@ namespace MiniIT.Snipe
 			SingleRequestClient.Request(SnipeConfig.Instance.auth, data, (response) =>
 			{
 				int user_id = 0;
-				
+
 				string error_code = response?.SafeGetString("errorCode");
 				if (error_code == "ok")
 				{
@@ -462,7 +462,7 @@ namespace MiniIT.Snipe
 
 					PlayerPrefs.SetString(SnipePrefs.AUTH_UID, auth_login);
 					PlayerPrefs.SetString(SnipePrefs.AUTH_KEY, auth_token);
-					
+
 					user_id = response.SafeGetValue<int>("id");
 
 					SwitchToDefaultAuthProvider();

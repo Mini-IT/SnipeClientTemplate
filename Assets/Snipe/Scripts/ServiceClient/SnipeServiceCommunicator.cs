@@ -9,14 +9,9 @@ namespace MiniIT.Snipe
 	{
 		public event Action<ExpandoObject> MessageReceived;
 
-		public bool Ready { get { return mClient != null && mClient.LoggedIn; } }
+		public bool Ready { get { return Client != null && Client.LoggedIn; } }
 
-		private SnipeServiceClient mClient;
-		internal SnipeServiceClient Client
-		{
-			get { return mClient; }
-			private set { mClient = value; }
-		}
+		internal SnipeServiceClient Client { get; private set; }
 
 		private Queue<ExpandoObject> mReceivedMessages = null;
 
@@ -38,15 +33,15 @@ namespace MiniIT.Snipe
 				return; // callback will be invoked in Update (main thread)
 			}
 
-			if (mClient == null)
+			if (Client == null)
 			{
-				mClient = new SnipeServiceClient();
-				mClient.LoginSucceeded += OnLoginSucceeded;
-				mClient.LoginFailed += OnLoginFailed;
+				Client = new SnipeServiceClient();
+				Client.LoginSucceeded += OnLoginSucceeded;
+				Client.LoginFailed += OnLoginFailed;
 			}
-			if (!mClient.Connected)
+			if (!Client.Connected)
 			{
-				mClient.Connect();
+				Client.Connect();
 			}
 		}
 
@@ -54,28 +49,28 @@ namespace MiniIT.Snipe
 		{
 			mReceivedMessages = null;
 
-			if (mClient != null)
+			if (Client != null)
 			{
-				mClient.LoginSucceeded -= OnLoginSucceeded;
-				mClient.LoginFailed -= OnLoginFailed;
-				mClient.MessageReceived -= OnMessageReceived;
-				mClient.Disconnect();
-				mClient = null;
+				Client.LoginSucceeded -= OnLoginSucceeded;
+				Client.LoginFailed -= OnLoginFailed;
+				Client.MessageReceived -= OnMessageReceived;
+				Client.Disconnect();
+				Client = null;
 			}
 		}
 
 		private void OnLoginSucceeded()
 		{
-			mClient.LoginSucceeded -= OnLoginSucceeded;
-			mClient.LoginFailed -= OnLoginFailed;
-			mClient.MessageReceived += OnMessageReceived;
+			Client.LoginSucceeded -= OnLoginSucceeded;
+			Client.LoginFailed -= OnLoginFailed;
+			Client.MessageReceived += OnMessageReceived;
 			mReceivedMessages = new Queue<ExpandoObject>();
 		}
 
 		private void OnLoginFailed(string obj)
 		{
-			mClient.LoginSucceeded -= OnLoginSucceeded;
-			mClient.LoginFailed -= OnLoginFailed;
+			Client.LoginSucceeded -= OnLoginSucceeded;
+			Client.LoginFailed -= OnLoginFailed;
 
 			// TODO: process error
 		}
@@ -87,6 +82,10 @@ namespace MiniIT.Snipe
 
 		private void OnMessageReceived(ExpandoObject data)
 		{
+#if UNITY_EDITOR
+			Debug.Log("[SnipeServiceCommunicator] OnMessageReceived: " + data?.ToJSONString());
+#endif
+
 			if (mReceivedMessages != null)
 			{
 				lock (mReceivedMessages)

@@ -8,6 +8,8 @@ namespace MiniIT.Snipe
 {
 	public class SnipeRoomCommunicator : SnipeCommunicator
 	{
+		public event Action RoomJoined;
+
 		protected SnipeCommunicator mGameCommunicator;
 
 		protected string mRoomType;
@@ -133,7 +135,8 @@ namespace MiniIT.Snipe
 
 		protected virtual void OnRoomJoin(ExpandoObject data)
 		{
-			
+			if (RoomJoined != null && data.SafeGetString("errorCode") == "ok")
+				RoomJoined.Invoke();
 		}
 
 		protected virtual void OnRoomLeave(ExpandoObject data)

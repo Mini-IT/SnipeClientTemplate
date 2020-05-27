@@ -11,6 +11,8 @@ namespace MiniIT.Snipe
 	public class SnipeServiceClient
 	{
 		public event Action<ExpandoObject> MessageReceived;
+		public event Action ConnectionOpened;
+		public event Action ConnectionClosed;
 		public event Action LoginSucceeded;
 		public event Action<string> LoginFailed;
 
@@ -106,8 +108,6 @@ namespace MiniIT.Snipe
 			return obj;
 		}
 
-
-
 		#region Web Socket
 
 		private WebSocketWrapper mWebSocket = null;
@@ -138,6 +138,15 @@ namespace MiniIT.Snipe
 			Debug.Log("[SnipeServiceClient] OnWebSocketConnected");
 			//#endif
 
+			try
+			{
+				ConnectionOpened?.Invoke();
+			}
+			catch (Exception e)
+			{
+				Debug.Log("[SnipeServiceClient] OnWebSocketConnected - ConnectionOpened invokation error: " + e.Message);
+			}
+
 			RequestLogin();
 		}
 
@@ -146,6 +155,15 @@ namespace MiniIT.Snipe
 			Debug.Log("[SnipeServiceClient] OnWebSocketClosed");
 
 			Disconnect();
+
+			try
+			{
+				ConnectionClosed?.Invoke();
+			}
+			catch (Exception e)
+			{
+				Debug.Log("[SnipeServiceClient] OnWebSocketClosed - ConnectionClosed invokation error: " + e.Message);
+			}
 		}
 
 		public void Disconnect()

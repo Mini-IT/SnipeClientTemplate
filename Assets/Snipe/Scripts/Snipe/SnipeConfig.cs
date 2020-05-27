@@ -20,7 +20,7 @@ public class SnipeConfig
 	public SnipeServerConfig server;
 	public SnipeServerConfig auth;
 
-	public string snipe_service_websocket;
+	public string snipe_service_websocket = "wss://dev.snipe.dev/wss_11000/";
 	public List<string> tables_path = new List<string>();
 
 	public static void InitFromJSON(string json_string)
