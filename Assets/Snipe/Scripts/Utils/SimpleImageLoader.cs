@@ -10,15 +10,24 @@ namespace MiniIT.Utils
 	{
 		private static GameObject mGameObject;
 		private static Dictionary<string, Texture2D> mCache;
+		private static Dictionary<string, SimpleImageLoader> mActiveLoaders;
 
-		public string Url; // { get; private set; }
+		private const int MAX_LOADERS_COUNT = 3;
+		private static int mLoadersCount = 0;
+
+#if UNITY_EDITOR
+		public string Url;
+#else
+		public string Url { get; private set; }
+#endif
 		private bool mUseCache = false;
 
 		private Action<Texture2D> mCallback;
+		private List<SimpleImageLoader> mParasiteLoaders;
 
 		public static SimpleImageLoader Load(string url, Action<Texture2D> callback = null, bool cache = false)
 		{
-			if (url == "")
+			if (string.IsNullOrWhiteSpace(url))
 				return null;
 
 			if (cache)
@@ -42,20 +51,27 @@ namespace MiniIT.Utils
 
 			var loader = mGameObject.AddComponent<SimpleImageLoader>();
 			loader.mUseCache = cache;
-			loader.DoLoad(url, callback);
+			if (mActiveLoaders != null && mActiveLoaders.TryGetValue(url, out var master_loader) && master_loader != null)
+			{
+				loader.Url = url;
+				loader.mCallback = callback;
+
+				if (master_loader.mParasiteLoaders == null)
+					master_loader.mParasiteLoaders = new List<SimpleImageLoader>();
+				master_loader.mParasiteLoaders.Add(loader);
+			}
+			else
+			{
+				loader.DoLoad(url, callback);
+			}
 			return loader;
 		}
 
-		//public void Dispose()
-		//{
-		//	StopAllCoroutines();
-		//	Destroy(this);
-		//}
 		public void Cancel()
 		{
 			mCallback = null;
 
-			if (!mUseCache)
+			if (!mUseCache && (mParasiteLoaders == null || mParasiteLoaders.Count < 1))
 			{
 				StopAllCoroutines();
 				Destroy(this);
@@ -64,6 +80,10 @@ namespace MiniIT.Utils
 
 		private void DoLoad(string url, Action<Texture2D> callBack)
 		{
+			if (mActiveLoaders == null)
+				mActiveLoaders = new Dictionary<string, SimpleImageLoader>();
+			mActiveLoaders[url] = this;
+
 			StartCoroutine(LoadCoroutine(url, callBack));
 		}
 
@@ -71,6 +91,10 @@ namespace MiniIT.Utils
 		{
 			Url = url;
 			mCallback = callback;
+
+			while (mLoadersCount >= MAX_LOADERS_COUNT)
+				yield return 0;
+			mLoadersCount++;
 
 			using (UnityWebRequest loader = new UnityWebRequest(url))
 			{
@@ -97,9 +121,25 @@ namespace MiniIT.Utils
 						mCallback.Invoke(texture);
 						mCallback = null;
 					}
+
+					if (mParasiteLoaders != null)
+					{
+						foreach (var parasite in mParasiteLoaders)
+						{
+							if (parasite != null)
+							{
+								parasite.mCallback?.Invoke(texture);
+								Destroy(parasite);
+							}
+						}
+						mParasiteLoaders = null;
+					}
 				}
 			}
 
+			mLoadersCount--;
+
+			mActiveLoaders?.Remove(url);
 			Destroy(this);
 		}
 	}
