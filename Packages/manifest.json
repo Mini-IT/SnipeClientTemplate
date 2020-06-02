@@ -2,8 +2,6 @@
   "dependencies": {
     "com.google.external-dependency-manager": "1.2.155",
     "com.miniit.snipe.client": "https://github.com/Mini-IT/SnipeUnityPackage.git",
-    "com.miniit.snipe.facebook": "https://github.com/Mini-IT/SnipeFacebookUnityPackage.git",
-    "com.miniit.snipe.googleplay": "https://github.com/Mini-IT/SnipeGooglePlayUnityPackage.git",
     "com.unity.textmeshpro": "2.0.1",
     "com.unity.ugui": "1.0.0",
     "com.unity.modules.ai": "1.0.0",
@@ -38,20 +36,6 @@
     "com.unity.modules.wind": "1.0.0",
     "com.unity.modules.xr": "1.0.0"
   },
-  "lock": {
-    "com.miniit.snipe.client": {
-      "revision": "HEAD",
-      "hash": "ce75b79e86f348c2cd97b08cd0f49805ef629fc8"
-    },
-    "com.miniit.snipe.facebook": {
-      "revision": "HEAD",
-      "hash": "f3645e17cbd8185d420faf25b4b2f5c542a8d3ad"
-    },
-    "com.miniit.snipe.googleplay": {
-      "revision": "HEAD",
-      "hash": "025f3affa5d6f00533fd235b73f79639d0149364"
-    }
-  },
   "scopedRegistries": [
     {
       "name": "Game Package Registry by Google",
@@ -60,5 +44,11 @@
         "com.google"
       ]
     }
-  ]
+  ],
+  "lock": {
+    "com.miniit.snipe.client": {
+      "revision": "HEAD",
+      "hash": "432907df6727b2f0a5e88007bd5bb768f48ca5e6"
+    }
+  }
 }
